@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venn Query</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material-darker.min.css">
+
+    <style type="text/css">
+        canvas{
+            position: absolute;
+            border: 1px solid black;
+            z-index: 1; 
+        }
+
+        body{
+            margin: 0;
+        }
+
+        #boundingBox{
+            position: absolute;
+            pointer-events: none;
+            border: 5px solid #4885ff;
+            z-index: 100;
+            border-radius: 32px;
+        }
+
+        #queryListWrap {
+            position: absolute; 
+            top: 0; 
+            right: 0; 
+            width: 512px;
+            z-index: 1000; 
+            margin: 20px;
+        }
+
+        #titleTab {
+            position: absolute; 
+            top: 0; 
+            left: calc(512px + 64px + 40px); 
+            right: calc(512px + 40px);
+            z-index: 1000; 
+            margin: 20px;
+        }
+
+        #toolTab{
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: calc(512px + 64px);
+            z-index: 1000; 
+            margin: 20px;
+        }
+
+
+
+        #titleWrap {
+            display: flex;
+            align-items: relative;
+            position: relative; 
+            top: 0; 
+            left: 0; 
+            right: 0;
+            height: 64px;
+            z-index: 1000; 
+        }
+
+        #queryRow {
+            display: inline-flex;
+            align-items: center;
+            left: 0;
+            right: 0;
+            width: calc(100% - 20px);
+            height: 48px;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 24px;
+            gap: 16px;
+        }
+
+        
+        .query-content {
+            font-size: 24px; 
+            text-align: right;
+            background-color: transparent;
+            border: none; 
+            outline: none; 
+            width: 256px;
+        }
+
+        .outlinedText {
+            color: white;
+            text-shadow: 
+                -1px -1px 0 #000,  
+                1px -1px 0 #000,
+                -1px  1px 0 #000,
+                1px  1px 0 #000;
+        }
+
+        #queryRow.hilighted {
+            background-color: #4885ff;
+        }
+
+
+        .listTab{
+            position: absolute;
+            width: calc(100% - 2px);
+            top: 0px;
+            padding-top: 64px;
+            padding-bottom: 28px;
+            z-index: -1;
+
+            background-color: #ffffff; 
+            border: 2px solid rgb(100, 100, 100);
+            border-radius: 32px;
+        }
+
+
+        .title-input {
+            font-size: 24px; 
+            display: flex;
+            text-align: left;
+            background-color: transparent;
+            border: none; 
+            outline: none; 
+        }
+
+
+        .topButton {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            height: 64px;
+            padding: 10px;
+            border: 3px solid rgb(100, 100, 100);
+            border-radius: 32px;
+            cursor: pointer;
+            font-size: 24px;
+            gap: 16px;
+            background-color: #ffffff; 
+            z-index: 100;
+        }
+
+        .topButton:hover {
+            background-color: #e6e6e6; 
+        }
+
+        .topButton:active {
+            background-color: #c1c1c1;
+        }
+
+        .baseButton{
+            display: flex;
+            background-color: #ffffff; 
+        }
+
+        .baseButton:hover {
+            background-color: #e6e6e6; 
+        }
+
+        .baseButton:active {
+            background-color: #c1c1c1;
+        }
+
+    </style> 
+</head>
+<body>
+    <canvas id="backgroundCanvas"></canvas>
+    <canvas id="mainCanvas"></canvas>
+
+    <div id="queryTags">
+    </div>
+
+    <div id="boundingBox"></div>
+
+    <div id="queryListWrap">
+        <button id="queryButton" class="topButton">
+            
+        </button>
+        <div class="listTab" id="queryList">
+        </div>
+    </div>
+    <div id="toolTab">
+        <div id="titleWrap">
+            <button class="topButton" style="border-top-right-radius: 0; border-bottom-right-radius: 0; width: 64px;">
+                Help
+            </button>
+            <button class="topButton" style="border-radius: 0; width: 256px;">
+                Code
+            </button>
+            <button class="topButton" style="border-top-left-radius: 0; border-bottom-left-radius: 0; width: 256px;">
+                Result
+            </button>
+        </div>
+        <div class="listTab" id="toolList">
+        </div>
+        <div class="listTab" id="codeTab">
+            <textarea id="code" name="code"></textarea>
+        </div>
+    </div>
+    <div id="titleTab">
+            <button id="titleButton" class="topButton">
+                
+            </button>
+            <div class="listTab" id="titleList">
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+
+    <script type="module" src="sceneManager.js"></script>
+</body>
+</html>
