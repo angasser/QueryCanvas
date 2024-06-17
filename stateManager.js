@@ -4,7 +4,6 @@ import { updateUi } from './uiDisplay.js';
 import { updateViewport, findEmpySpace } from './viewport.js';
 
 export function updateAll(state) {
-    console.log("update");
 
     updateViewport(state.viewport, state);
     updateUi(state.uiDisplay, state);

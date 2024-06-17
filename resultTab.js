@@ -40,6 +40,7 @@ function spawnText(s, parent, bold = false) {
 
 export function updateResultTab(state, uiDisplay) {
     const viewport = state.activeView;
+    uiDisplay.resultTab.innerHTML = '';
 
     if (viewport.fragments.size === 0 || state.selectedToolTab !== toolType.result) {
         toggleTabList(uiDisplay.resultTab, false);

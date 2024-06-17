@@ -276,6 +276,7 @@ export function itemButton(imageSrc, size, clicked, hovered, unhovered, visible 
     button.style.cursor = 'pointer';
     button.style.visibility = visible ? 'visible' : 'hidden'; 
     button.style.pointerEvents = visible ? 'auto' : 'none'; 
+    button.style.flexShrink = '0';
 
     // Style the image to use the entire width and height of the button
     img.style.width = '100%';

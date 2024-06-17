@@ -31,7 +31,8 @@
             position: absolute; 
             top: 0; 
             right: 0; 
-            width: 512px;
+            width: 30%;
+            /* width: 512px; */
             z-index: 1000; 
             margin: 20px;
         }
@@ -39,8 +40,10 @@
         #titleTab {
             position: absolute; 
             top: 0; 
-            left: calc(512px + 64px + 40px); 
-            right: calc(512px + 40px);
+            left: 40%;
+            right: calc(30% + 20px);
+            /* left: calc(512px + 64px + 40px); 
+            right: calc(512px + 40px); */
             z-index: 1000; 
             margin: 20px;
         }
@@ -49,13 +52,13 @@
             position: absolute; 
             top: 0; 
             left: 0; 
-            width: 600px;
+            width: calc(40% - 20px);
             z-index: 1000; 
             margin: 20px;
         }
 
         #queryRow {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             left: 0;
             right: 0;
@@ -64,7 +67,7 @@
             padding: 10px;
             cursor: pointer;
             font-size: 24px;
-            gap: 16px;
+            gap: 4px;
         }
 
         .baseTitle{
@@ -75,11 +78,13 @@
         
         .query-content {
             font-size: 24px; 
+            width: 32px;
+            flex-grow: 1;
+            flex-shrink: 1;
             text-align: right;
             background-color: transparent;
             border: none; 
             outline: none; 
-            width: 256px;
         }
 
         .outlinedText {

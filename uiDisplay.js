@@ -259,20 +259,28 @@ export function updateQueryDisplay(uiDisplay, state) {
 
 export function addQueryRow(uiDisplay, state, query) {
     const listItem = document.createElement('div');
+
     listItem.innerHTML = `
-        <div id="queryRow"> 
-            <div class="row-buttons" style="width: calc((32+4)*4)px; gap: 4px;"> </div>
-            <input class="query-content" value="${query.content}" />
-            ${getQueryCircle(state, query.id)}
+        <div id="queryRow">
+            
         </div>
         <div class="shape-rows"> 
         </div>
         <hr style="margin: 0">
     `;
 
-    const isDisabled = getShapesFromQuery(state, query.id).size === 0;
-    const inputField = listItem.querySelector('.query-content');
     const queryRow = listItem.querySelector('#queryRow');
+    createQueryEditButtons(state, query, queryRow);
+
+    const inputField = createQueryInputField(state, query, queryRow);
+    
+    const iconWrap = document.createElement('div');
+    iconWrap.className = 'centerWrap';
+    iconWrap.innerHTML = getQueryCircle(state, query.id);
+    queryRow.appendChild(iconWrap);
+
+    const isDisabled = getShapesFromQuery(state, query.id).size === 0;
+
     queryRow.addEventListener('mouseenter', () => {
         if (isDisabled)
             return;
@@ -287,10 +295,32 @@ export function addQueryRow(uiDisplay, state, query) {
         updateAll(state);
     });
 
-    const rowButtons = listItem.querySelector('.row-buttons');
+    if (state.selectedQuery !== null && state.selectedQuery.type === "query" && state.selectedQuery.id === query.id) {
+        setElementInteraction(queryRow, interactionType.Selected);
+        inputField.select();
+    }
+    else if (isDisabled) {
+        setElementInteraction(queryRow, interactionType.Disabled)
+    }
+    else if (state.hoveredQueries.has(query.id)) {
+        setElementInteraction(queryRow, interactionType.Highlighted)
+    }
+
+    // Shape rows
+    if (state.visibleQueryShapeRows.has(query.id)) {
+        const rows = listItem.querySelector('.shape-rows');
+        const shapes = getShapesFromQuery(state, query.id);
+        for (const shape of shapes) 
+            addShapeRow(uiDisplay, rows, state, shape);
+    }
+
+    uiDisplay.queryList.appendChild(listItem);
+}
+
+function createQueryEditButtons(state, query, row) {
     const arrowButton = state.visibleQueryShapeRows.has(query.id) ? "./svgs/icons8-up-100.png" : "./svgs/icons8-down-button-100.png";
 
-    rowButtons.appendChild(itemButton(arrowButton, 32, () => {
+    row.appendChild(itemButton(arrowButton, 32, () => {
         if (state.visibleQueryShapeRows.has(query.id)) {
             state.visibleQueryShapeRows.delete(query.id);
         }
@@ -300,10 +330,10 @@ export function addQueryRow(uiDisplay, state, query) {
         updateAll(state);
     }, null, null, getShapesFromQuery(state, query.id).size !== 0));
 
-    rowButtons.appendChild(itemButton("./svgs/icons8-plus.svg", 32, () => {
+    row.appendChild(itemButton("./svgs/icons8-plus.svg", 32, () => {
         createNewShape(state, query.id);
     }, null, null));
-    rowButtons.appendChild(itemButton("./svgs/icons8-cross.svg", 32, () => {
+    row.appendChild(itemButton("./svgs/icons8-cross.svg", 32, () => {
         if (query.id <= 0) {
             const isConfirmed = confirm("Are you sure you want to remove this variable and viewport?");
             if (isConfirmed) {
@@ -318,14 +348,18 @@ export function addQueryRow(uiDisplay, state, query) {
         }
     }, null, null, query.id !== 0));
 
-    rowButtons.appendChild(itemButton("./svgs/icons8-arrow-100.png", 32, () => {
+    row.appendChild(itemButton("./svgs/icons8-arrow-100.png", 32, () => {
         switchViewport(state, -query.id);
     }, null, null, query.id <= 0));
+}
 
-    inputField.addEventListener('focus', function (event) {
-        event.target.select();
-    });
+function createQueryInputField(state, query, row) {
+    const inputField = document.createElement('input');
+    inputField.className = 'query-content';
+    inputField.value = query.content;
+    row.appendChild(inputField);
 
+    
     inputField.addEventListener('blur', function (event) {
         const val = event.target.value;
         if (val.length > 0) {
@@ -346,29 +380,14 @@ export function addQueryRow(uiDisplay, state, query) {
             inputField.blur();
         }
     });
-
-    if (state.visibleQueryShapeRows.has(query.id)) {
-        const rows = listItem.querySelector('.shape-rows');
-        const shapes = getShapesFromQuery(state, query.id);
-        for (const shape of shapes) 
-            addShapeRow(uiDisplay, rows, state, shape);
-    }
-
-    uiDisplay.queryList.appendChild(listItem);
-    if (state.selectedQuery !== null && state.selectedQuery.type === "query" && state.selectedQuery.id === query.id) {
-        setElementInteraction(queryRow, interactionType.Selected);
-        inputField.select();
-    }
-    else if (isDisabled) {
-        setElementInteraction(queryRow, interactionType.Disabled)
-    }
-    else if (state.hoveredQueries.has(query.id)) {
-        setElementInteraction(queryRow, interactionType.Highlighted)
-    }
-
     
-    
+    inputField.addEventListener('focus', function (event) {
+        event.target.select();
+    });
+
+    return inputField;
 }
+
 
 function addShapeRow(uiDisplay, queryRow, state, shape) {
     const listItem = document.createElement('div');
@@ -386,13 +405,13 @@ function addShapeRow(uiDisplay, queryRow, state, shape) {
             width: 32px;
             gap: 4px;">
         </div>
-        <input style="flex-grow: 1;"
+        <input style="flex-grow: 1; width: 32px;"
             type="range" min="50" max="500" value="${shapInst.radius}" class="slider" id="radius">
     `;
 
     if (shapInst.shapeType === shapeType.Rectangle) {
         listItem.innerHTML += `
-            <input style="flex-grow: 1;"
+            <input style="flex-grow: 1; width: 32px;"
                 type="range" min="50" max="500" value="${shapInst.radius2}" class="slider" id="radius2">
         `;
 
