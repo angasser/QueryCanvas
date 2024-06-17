@@ -1,4 +1,4 @@
-import { interactionType, shapeType } from "./structs.js";
+import { interactionType, shapeType, toolType } from "./structs.js";
 
 export function drawFragment(ctx, frag) {
     const points = frag.points;
@@ -147,14 +147,18 @@ export function getShapesInBox(state, box) {
 }
 
 export function setElementInteraction(element, interaction) {
+    if (interaction === interactionType.Disabled) {
+        element.style.color = "#c1c1c1";
+    }
+    else element.style.color = "black";
     element.style.backgroundColor = getInteractionColor(interaction);
 }
 
 export function getInteractionColor(interaction) {
     return interaction === interactionType.None ? "white" :
-        interaction === interactionType.Highlighted ? "#f3cf41" :
-        interaction === interactionType.Selected ? "#4885ff" :
-            "#999999";
+        interaction === interactionType.Highlighted ? "#cae5ef" :
+        interaction === interactionType.Selected ? "#a0c4d1" :
+            "#e3e3e3";
 }
 
 export function getColor(i) {
@@ -409,4 +413,6 @@ export function darkColor(color) {
 export function whitenColor(color) {
     return rgbToString(colorLerp(color, [255, 255, 255], 0.5));
 }
+
+
 

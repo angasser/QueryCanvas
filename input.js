@@ -1,33 +1,26 @@
 import { getShapesUnderPoint, updateViewport } from './viewport.js';
-import { updateUi } from './uiDisplay.js';
+import { initializeUiInput } from './uiDisplay.js';
 import { areSetsEqual, getQueriesFromShapes, getShapeBoundingBox, getShapesInBox, toInt } from './util.js';
 import { createNewQuery, setHoverFromFragments, setHoverFromShapes, switchViewport, toggleInactiveFragment, updateAll } from './stateManager.js';
 import { updateBoxHover, updateQueryTags } from './uiQueryTags.js';
 import { hoverType } from './structs.js';
 
 export class InputHandler {
-    constructor(canvas, state) {
+    constructor(viewport, uiDisplay, state) {
         this.state = state;
-        this.canvas = canvas;
+        this.viewport = viewport;
+        this.uiDisplay = uiDisplay;
         this.isDragging = false;
         this.dragStartPoint = null;
         this.dragLastPoint = null;
-        initializeInput(this, canvas.mainCanvas, state);
+        initializeInput(this, viewport.mainCanvas, state);
+        initializeUiInput(uiDisplay, state);
     }
 }
 
 
 function initializeInput(handler, canvas) {
     const state = handler.state;
-
-    state.uiDisplay.queryButton.addEventListener('click', () => {
-        if (state.queries.size === 1) {
-            createNewQuery(state);
-            return;
-        }
-        state.areQueriesVisible = !state.areQueriesVisible;
-        updateAll(state);
-    });
 
     canvas.addEventListener('mousedown', (e) => {
         const rect = canvas.getBoundingClientRect();

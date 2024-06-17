@@ -153,6 +153,26 @@ export function addNewViewport(state, stayInCurrentViewport = false) {
     return id;
 }
 
+export function createViewportFromShapes(state, shapeIds) {
+    const shapes = new Map();
+    let center = { x: 0, y: 0 };
+    for (const shape of shapeIds) {
+        const shapInst = state.activeView.shapes.get(shape);
+        center.x += shapInst.center.x;
+        center.y += shapInst.center.y;
+        shapes.set(shape, shapInst);
+
+        removeShape(state, shape, false);
+    }
+    center.x /= Math.max(1, shapeIds.size);
+    center.y /= Math.max(1, shapeIds.size);
+
+    const id = addNewViewport(state, true);
+    state.viewportStates.get(id).shapes = shapes;
+
+    createNewShape(state, -id, center);
+}
+
 export function removeViewport(state, viewportId) {
     if (viewportId === 0) {
         console.log("Cannot remove main view");

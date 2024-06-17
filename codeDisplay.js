@@ -1,3 +1,6 @@
+import { toolType } from "./structs.js";
+import { toggleTabList } from "./uiDisplay.js";
+
 export function initCodeTab(state) {
     state.codeTab = document.querySelector('#codeTab');
     state.codeBox = document.getElementById("code");
@@ -34,5 +37,11 @@ export function initCodeTab(state) {
     document.head.appendChild(style);
 }
 
-export function updateCodeTab(state) {
+export function updateCodeTab(uiDisplay, state) {
+    if (state.selectedToolTab !== toolType.code) {
+        toggleTabList(uiDisplay.codeTab, false);
+        return;
+    }
+
+    toggleTabList(uiDisplay.codeTab, true);
 }

@@ -27,7 +27,7 @@
             border-radius: 32px;
         }
 
-        #queryListWrap {
+        #queryTab {
             position: absolute; 
             top: 0; 
             right: 0; 
@@ -49,22 +49,9 @@
             position: absolute; 
             top: 0; 
             left: 0; 
-            width: calc(512px + 64px);
+            width: 600px;
             z-index: 1000; 
             margin: 20px;
-        }
-
-
-
-        #titleWrap {
-            display: flex;
-            align-items: relative;
-            position: relative; 
-            top: 0; 
-            left: 0; 
-            right: 0;
-            height: 64px;
-            z-index: 1000; 
         }
 
         #queryRow {
@@ -80,6 +67,11 @@
             gap: 16px;
         }
 
+        .baseTitle{
+            flex-grow: 1;
+            text-align: left;
+            font-size: 24px;
+        }
         
         .query-content {
             font-size: 24px; 
@@ -97,10 +89,6 @@
                 1px -1px 0 #000,
                 -1px  1px 0 #000,
                 1px  1px 0 #000;
-        }
-
-        #queryRow.hilighted {
-            background-color: #4885ff;
         }
 
 
@@ -144,12 +132,18 @@
             z-index: 100;
         }
 
-        .topButton:hover {
-            background-color: #e6e6e6; 
+        .topButton:not(:disabled):hover {
+            filter: brightness(90%);
         }
 
         .topButton:active {
-            background-color: #c1c1c1;
+            filter: brightness(75%);
+        }
+
+        .centerWrap{
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .baseButton{
@@ -158,11 +152,11 @@
         }
 
         .baseButton:hover {
-            background-color: #e6e6e6; 
+            background-color: #cae5ef; 
         }
 
         .baseButton:active {
-            background-color: #c1c1c1;
+            background-color: #a0c4d1;
         }
 
     </style> 
@@ -176,34 +170,50 @@
 
     <div id="boundingBox"></div>
 
-    <div id="queryListWrap">
-        <button id="queryButton" class="topButton">
-            
+    <div id="queryTab">
+        <button id="queryBar" class="topButton">
+            <div id="queryToggle" class="centerWrap"> </div>
+            <div id="queryTitleText" class="baseTitle"></div>
+            <div id="queryAddButton" class="centerWrap"></div>
         </button>
         <div class="listTab" id="queryList">
         </div>
     </div>
     <div id="toolTab">
-        <div id="titleWrap">
-            <button class="topButton" style="border-top-right-radius: 0; border-bottom-right-radius: 0; width: 64px;">
+        <div id="toolBar" style="display: flex;">
+            <button class="topButton" style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 0 0 64px;">
+                Menu
+            </button>
+            <button class="topButton" style="border-radius: 0; flex: 0 0 64px;">
                 Help
             </button>
-            <button class="topButton" style="border-radius: 0; width: 256px;">
+            <button class="topButton" style="border-radius: 0; flex: 1;">
                 Code
             </button>
-            <button class="topButton" style="border-top-left-radius: 0; border-bottom-left-radius: 0; width: 256px;">
+            <button class="topButton" style="border-top-left-radius: 0; border-bottom-left-radius: 0; flex: 1;">
                 Result
             </button>
         </div>
-        <div class="listTab" id="toolList">
+        <div class="listTab" id="resultTab">
         </div>
         <div class="listTab" id="codeTab">
             <textarea id="code" name="code"></textarea>
         </div>
     </div>
     <div id="titleTab">
-            <button id="titleButton" class="topButton">
-                
+            <button id="titleBar" class="topButton">
+                <div id="titleToggle" class="centerWrap"></div>
+                <input id="titleInput" type="text" value="Dynamic Name" class="title-input" style="width: calc(100% - 128px); font-weight: bold;">
+                <div id="titleOverwrite" style="
+                    font-size: 24px; 
+                    position: absolute; 
+                    z-index: 500; 
+                    left: 72px; 
+                    right: 72px; 
+                    visibility: hidden; 
+                    pointer-events: none;">
+                </div>
+                <div id="titleAddButton" class="centerWrap"></div>
             </button>
             <div class="listTab" id="titleList">
             </div>

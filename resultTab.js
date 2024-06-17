@@ -1,5 +1,5 @@
 import { setHoverFromFragments, setHoverFromShapes, updateAll } from "./stateManager.js";
-import { fragmentIterator, hoverType, interactionType } from "./structs.js";
+import { fragmentIterator, hoverType, interactionType, toolType } from "./structs.js";
 import { getQueryCircle, toggleTabList } from "./uiDisplay.js";
 import { areSetsEqual, getFragmentsFromShapes, getQueriesFromShapes, isIntSubset, isSubset, setElementInteraction, toInt, toShapes } from "./util.js";
 import { getAllOverlapping } from "./viewport.js";
@@ -23,7 +23,7 @@ function createTextRow(uiDisplay, isIndented = false) {
     row.style.padding = '8px';
     row.style.paddingLeft = isIndented ? '36px' : '8px';
     row.style.fontSize = '24px';
-    uiDisplay.toolList.appendChild(row);
+    uiDisplay.resultTab.appendChild(row);
     
     return row;
 }
@@ -39,14 +39,14 @@ function spawnText(s, parent, bold = false) {
 }
 
 export function updateResultTab(state, uiDisplay) {
-    uiDisplay.toolList.innerHTML = '';
     const viewport = state.activeView;
 
-    if (viewport.fragments.size === 0) {
-        toggleTabList(uiDisplay.toolList, false);
+    if (viewport.fragments.size === 0 || state.selectedToolTab !== toolType.result) {
+        toggleTabList(uiDisplay.resultTab, false);
         return;
     }
-    toggleTabList(uiDisplay.toolList, true);
+
+    toggleTabList(uiDisplay.resultTab, true);
 
     for (const frag of viewport.fragments.keys()) {
         createResultRow(state, uiDisplay, frag);
@@ -62,7 +62,7 @@ function createResultRow(state, uiDisplay, frag) {
     if (ty == textQueryType.None)
         return;
 
-    const first = uiDisplay.toolList.children.length === 0;
+    const first = uiDisplay.resultTab.children.length === 0;
     const row = createTextRow(uiDisplay);
 
     if (first)

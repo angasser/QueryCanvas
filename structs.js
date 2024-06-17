@@ -1,11 +1,27 @@
 import { initCodeTab } from "./codeDisplay.js";
 import { addNewViewport, createNewQuery } from "./stateManager.js";
+import { toInt } from "./util.js";
 
 export const shapeType = Object.freeze({
     Circle: 0,
     Rectangle: 1,
     Rhombus: 2,
 });
+
+export const toolType = Object.freeze({
+    menu: 0,
+    help: 1,
+    code: 2,
+    result: 3,
+});
+
+export function toToolType(i) {
+    return i === 0 ? toolType.menu :
+        i === 1 ? toolType.help :
+        i === 2 ? toolType.code :
+        toolType.result;
+            
+}
 
 export const hoverType = Object.freeze({
     queryList: 0,
@@ -46,7 +62,7 @@ export class GameState{
         this.areQueriesVisible = false;
         this.isViewportSelectionVisible = false;
         this.visibleQueryShapeRows = new Set();
-        this.selectedToolTab = "result";
+        this.selectedToolTab = toolType.result;
 
         this.queryTagRef = document.querySelector('#queryTags');
         this.boundingBoxRef = document.querySelector('#boundingBox');

@@ -1,6 +1,6 @@
 import { itemButton, getShapesFromQuery, setElementInteraction, itemTextButton, areSetsEqual, numberToLetter, darkColor, hexToRgb, getShapesInBox } from './util.js';
-import { createNewQuery, removeQuery, createNewShape, removeShape, addNewViewport, switchViewport, removeViewport, updateViewportName, updateAll, setHoverFromShapes } from './stateManager.js';
-import { interactionType, shapeType, hoverType } from './structs.js';
+import { createNewQuery, removeQuery, createNewShape, removeShape, addNewViewport, switchViewport, removeViewport, updateViewportName, updateAll, setHoverFromShapes, createViewportFromShapes } from './stateManager.js';
+import { interactionType, shapeType, hoverType, toToolType, toolType } from './structs.js';
 import { updateResultTab } from './resultTab.js';
 import { updateViewport } from './viewport.js';
 import { updateCodeTab } from './codeDisplay.js';
@@ -8,23 +8,80 @@ import { updateCodeTab } from './codeDisplay.js';
 export class UIDisplay {
     constructor() {
         this.queryList = document.querySelector('#queryList');
-        this.toolList = document.querySelector('#toolList');
+        this.resultTab = document.querySelector('#resultTab');
         this.titleList = document.querySelector('#titleList');
 
-        this.queryButton = document.querySelector('#queryButton');
-        this.titleButton = document.querySelector('#titleButton');
+        this.queryBar = document.querySelector('#queryBar');
+        this.titleBar = document.querySelector('#titleBar');
+        this.toolBar = document.querySelector('#toolBar');
+        
+        this.queryToggle = document.querySelector('#queryToggle');
+        this.queryTitleText = document.querySelector('#queryTitleText');
+        this.queryAddButton = document.querySelector('#queryAddButton');
+
+        this.titleInput = document.querySelector('#titleInput');
+        this.titleOverwrite = document.querySelector('#titleOverwrite');
+        this.titleAddButton = document.querySelector('#titleAddButton');
+        this.titleToggle = document.querySelector('#titleToggle');
+    }
+} 
+
+export function updateUi(uiDisplay, state) {
+    updateQueryBar(uiDisplay, state);
+    updateQueryDisplay(uiDisplay, state);
+    
+    updateTitleBar(uiDisplay, state);
+
+    updateToolBar(uiDisplay, state);
+}
+
+export function initializeUiInput(uiDisplay, state) {
+
+    // query bar
+    uiDisplay.queryBar.addEventListener('click', () => {
+        if (state.queries.size === 1) {
+            createNewQuery(state);
+            return;
+        }
+        state.areQueriesVisible = !state.areQueriesVisible;
+        updateAll(state);
+    });
+
+    // title bar
+    uiDisplay.titleInput.addEventListener('blur', function (event) {
+        const val = event.target.value;
+
+        const id = state.selectedQuery === null || state.selectedQuery.type === "query" ? state.activeView.id : state.selectedQuery.id;
+        state.selectedQuery = null;
+        if (val.length > 0) {
+            updateViewportName(state, id, val);
+        }
+        updateTitleBar(uiDisplay, state);
+    });
+
+    uiDisplay.titleInput.addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            titleInput.blur();
+        }
+    });
+
+    
+
+    // tool bar
+    for (let i = 0; i < uiDisplay.toolBar.children.length; i++) {
+        const button = uiDisplay.toolBar.children[i];
+
+        button.addEventListener('click', () => {
+            state.selectedToolTab = toToolType(i);
+            updateAll(state);
+        });
     }
 }
 
-export function updateUi(uiDisplay, state) {
-    updateQueryDisplay(uiDisplay, state);
-    updateTabBars(uiDisplay, state);
-    updateToolTab(uiDisplay, state);
-    updateCodeTab(state);
-}
 
-export function updateTabBars(uiDisplay, state) {
-    const noQueries = state.queries.size <= 1;
+export function updateQueryBar(uiDisplay, state) {
+    const noQueries = state.queries.size <= 1 || (state.queries.size === 2 && state.viewportStates.size > 1 && state.activeView.id !== 0);
     if (noQueries) {
         state.areQueriesVisible = false;
     }
@@ -33,55 +90,57 @@ export function updateTabBars(uiDisplay, state) {
         state.areQueriesVisible ? `./svgs/icons8-up-100.png` :
             `./svgs/icons8-down-button-100.png`;
 
+    const queryToggle = `<img style="visibility: ${noQueries ? "hidden" : "visible"};" src="${visibilityIcon}" alt="Icon" width="48">`;
+    uiDisplay.queryToggle.innerHTML = queryToggle;
+
     const buttonText = noQueries ? "Create new Query" : state.areQueriesVisible ? "Queries" : "Show Queries";
-    
-    uiDisplay.queryButton.innerHTML = `
-        <div style="
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            gap: 16px;
-            ">
-            <img style="visibility: ${noQueries ? "hidden" : "visible"};" src="${visibilityIcon}" alt="Icon" width="48">
-            <div id="titleText" style="white-space: pre;">${buttonText}</div>
-        </div>
-        <div id="addButtons" style="
-            display: flex;
-            justify-content: space-between;
-            gap: 2px";
-        ></div>
-    `;
+    uiDisplay.queryTitleText.innerHTML = buttonText;
 
-    const titleText = document.querySelector('#titleText');
-    const addButtons = document.querySelector('#addButtons');
-
-    addButtons.appendChild(itemButton("./svgs/icons8-plus.svg", 48, (event) => {
+    uiDisplay.queryAddButton.innerHTML = '';
+    uiDisplay.queryAddButton.appendChild(itemButton("./svgs/icons8-plus.svg", 48, (event) => {
         event.stopPropagation();
         createNewQuery(state);
     }, () => {
-        titleText.innerHTML = "Create new Query";
+        uiDisplay.queryTitleText.innerHTML = "Create new Query";
     }, () => {
-        titleText.innerHTML = buttonText;
+        uiDisplay.queryTitleText.innerHTML = buttonText;
     }));
-
-    updateTitleButton(uiDisplay, state);
 }
 
-export function updateToolTab(uiDisplay, state) {
-    if (state.selectedToolTab === null) {
-        toggleTabList(uiDisplay.toolList, false);
+export function updateToolBar(uiDisplay, state) {
+    for (let i = 0; i < uiDisplay.toolBar.children.length; i++) {
+        const button = uiDisplay.toolBar.children[i];
+        if (state.selectedToolTab === i) {
+            setElementInteraction(button, interactionType.Selected);
+        }
+        else {
+            setElementInteraction(button, interactionType.None);
+        }
+
+        if (i === toolType.result) {
+            const disabled = state.activeView.shapes.size === 0;
+            button.disabled = disabled;
+            if(disabled) {
+                setElementInteraction(button, interactionType.Disabled);
+            }
+        }
     }
-    else if (state.selectedToolTab === "result") {
-        updateResultTab(state, uiDisplay);
-    }
+
+    updateResultTab(state, uiDisplay);
+    updateCodeTab(state, uiDisplay);
 }
 
-function updateTitleButton(uiDisplay, state) {
+function updateTitleBar(uiDisplay, state) {
+    // When destroying elements, selectedQuery may be set to null (through unhover listeners)
     const selectedQuery = state.selectedQuery;
-    uiDisplay.titleButton.innerHTML = "";
+    uiDisplay.titleAddButton.innerHTML = '';
+    uiDisplay.titleToggle.innerHTML = '';
+    uiDisplay.titleList.innerHTML = '';
     state.selectedQuery = selectedQuery;
-    uiDisplay.titleButton.style.position = 'relative'; 
+    // uiDisplay.titleBar.style.position = 'relative';
 
+    
+    
     let selectedId = state.activeView.id;
     let editableId = null;
     if (selectedQuery !== null && selectedQuery.type !== "query") {
@@ -90,83 +149,41 @@ function updateTitleButton(uiDisplay, state) {
     }
 
     if (selectedId === 0) {
-        uiDisplay.titleButton.style.backgroundColor = "white";
+        uiDisplay.titleBar.style.backgroundColor = "white";
     }
     else {
         const query = state.queries.get(-selectedId);
-        uiDisplay.titleButton.style.backgroundColor = query.color;
+        uiDisplay.titleBar.style.backgroundColor = query.color;
     }
         
-    const titleInput = document.createElement("input");
-    titleInput.setAttribute("type", "text");
+    const titleInput = uiDisplay.titleInput;
     titleInput.setAttribute("value", state.viewportStates.get(selectedId).getName());
-    titleInput.setAttribute("class", "title-input");
-    titleInput.style.width = "calc(100% - 128px)";
-    titleInput.style.fontWeight = "bold";
 
-
-    const addText = document.createElement("div");
     const isBoxSelected = state.boxSelectionBox !== null && state.boxSelectedShapes.size > 0;
-    addText.innerHTML = isBoxSelected ? "Create Variable from selection" : "Add new Variable";
-    addText.style.fontSize = "24px";
-    addText.style.position = "absolute";
-    addText.style.zIndex = 500;
-    addText.style.left = "72px";
-    addText.style.right = "72px";
-    addText.style.visibility = "hidden";
-    addText.style.pointerEvent = "none";
+    uiDisplay.titleOverwrite.innerHTML = isBoxSelected ? "Create Variable from selection" : "Add new Variable";
+    uiDisplay.titleOverwrite.style.visibility = "hidden";
+    uiDisplay.titleInput.style.visibility = "visible";
     
-    titleInput.addEventListener('blur', function (event) {
-        const val = event.target.value;
-        const id = state.selectedQuery === null || state.selectedQuery.type === "query" ? state.activeView.id : state.selectedQuery.id;
-        state.selectedQuery = null;
-        if (val.length > 0) {
-            updateViewportName(state, id, val);
-        }
-        updateTitleButton(uiDisplay, state);
-    });
-
-    titleInput.addEventListener('keypress', function (event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            titleInput.blur();
-        }
-    });
-
     const addIcon = isBoxSelected ?  "./svgs/icons8-plus-box.svg" : "./svgs/icons8-plus.svg";
     const addButton = itemButton(addIcon, 48, (event) => {
         if (isBoxSelected) {
             const shapeIds = state.boxSelectedShapes;  //getShapesInBox(state, state.boxSelectionBox);
-            const shapes = new Map();
-            let center = { x: 0, y: 0 };
-            for (const shape of shapeIds) {
-                const shapInst = state.activeView.shapes.get(shape);
-                center.x += shapInst.center.x;
-                center.y += shapInst.center.y;
-                shapes.set(shape, shapInst);
-
-                removeShape(state, shape, false);
-            }
-            center.x /= Math.max(1, shapeIds.size);
-            center.y /= Math.max(1, shapeIds.size);
-
-            const id = addNewViewport(state, true);
-            state.viewportStates.get(id).shapes = shapes;
-
-            createNewShape(state, -id, center);
+            createViewportFromShapes(state, shapeIds);
         }
         else {
             addNewViewport(state, false);
         }
     }, () => {
         if (state.selectedQuery === null || state.selectedQuery.type === "query") {
-            addText.style.visibility = "visible";
-            titleInput.style.visibility = "hidden";
+            uiDisplay.titleOverwrite.style.visibility = "visible";
+            uiDisplay.titleInput.style.visibility = "hidden";
         }
     }, () => {
-        addText.style.visibility = "hidden";
-        titleInput.style.visibility = "visible";
+        uiDisplay.titleOverwrite.style.visibility = "hidden";
+        uiDisplay.titleInput.style.visibility = "visible";
     });
+
+    uiDisplay.titleAddButton.appendChild(addButton);
 
     const arrowButton = state.isViewportSelectionVisible ? "./svgs/icons8-up-100.png" : "./svgs/icons8-down-button-100.png";
     const toggleButton = itemButton(arrowButton, 48, () => {
@@ -174,14 +191,9 @@ function updateTitleButton(uiDisplay, state) {
         updateAll(state);
     }, null, null, state.viewportStates.size > 1);
 
-
-    uiDisplay.titleButton.appendChild(toggleButton);
-    uiDisplay.titleButton.appendChild(titleInput);
-    uiDisplay.titleButton.appendChild(addButton);
-    uiDisplay.titleButton.appendChild(addText);
+    uiDisplay.titleToggle.appendChild(toggleButton);
 
     toggleTabList(uiDisplay.titleList, state.isViewportSelectionVisible);
-    uiDisplay.titleList.innerHTML = '';
     if (state.isViewportSelectionVisible) {
         for (const view of state.viewportStates.values()) {
             addTitleRow(uiDisplay, state, view);
@@ -240,7 +252,7 @@ export function updateQueryDisplay(uiDisplay, state) {
     }
 
     for (const query of state.queries.values()) {
-        if(-query.id !== state.activeView.id &&getShapesFromQuery(state, query.id).size === 0)
+        if(query.id !== 0 && -query.id !== state.activeView.id &&getShapesFromQuery(state, query.id).size === 0)
             addQueryRow(uiDisplay, state, query);
     }    
 }
@@ -475,7 +487,7 @@ export function getQueryCircle(state, queryId, size=48) {
 
 export function toggleTabList(list, visible) {
     if (!visible) {
-        list.innerHTML = '';
+        // list.innerHTML = '';
         list.style.paddingBottom = '0';
         list.style.visibility = 'hidden';
     }
