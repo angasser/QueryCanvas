@@ -54,6 +54,7 @@ export function updateResultTab(state, uiDisplay) {
     }
 }
 
+
 function createResultRow(state, uiDisplay, frag) {
     const viewport = state.activeView;
     const fragShapes = toShapes(frag);
@@ -160,7 +161,7 @@ function spawnAllTrueExceptText(state, overlapping, row) {
         const exceptRow = createTextRow(state.uiDisplay, true);
         spawnText("if", exceptRow);
         
-        const ind = inactive[i]
+        const ind = inactive[i];
         const l = toShapes(ind);
         for (let inte = 0; inte < overlapping.length; inte++)
         {
@@ -224,20 +225,20 @@ function spawnQuery2Text(state, c1, c2, row)
         spawnText("but not both hold", row);
     } else if (c1Active && !c2Active && bothActive) {
         spawnCircle(state, row, c1);
-        spawnText("hold", row);
+        spawnText("holds", row);
     } else if (!c1Active && c2Active && bothActive) {
         spawnCircle(state, row, c2);
-        spawnText("hold", row);
+        spawnText("holds", row);
     } else if (c1Active && !c2Active && !bothActive) {
         spawnCircle(state, row, c1);
         spawnText("but not", row);
         spawnCircle(state, row, c2);
-        spawnText("hold", row);
+        spawnText("holds", row);
     } else if (!c1Active && c2Active && !bothActive) {
         spawnCircle(state, row, c2);
         spawnText("but not", row);
         spawnCircle(state, row, c1);
-        spawnText("hold", row);
+        spawnText("holds", row);
     } else if (!c1Active && !c2Active && bothActive) {
         spawnCircle(state, row, c2);
         spawnText("and", row);
@@ -296,7 +297,7 @@ function setRowHover(state, row, isHighlighted, getHover) {
 }
 
 
-function getQueryType(state, shapeIds, overlapping)
+export function getQueryType(state, shapeIds, overlapping)
 {
     if (shapeIds.length === 0)
         return textQueryType.None;
@@ -340,7 +341,7 @@ function getQueryType(state, shapeIds, overlapping)
     return textQueryType.Normal;
 }
 
-function getActivesAndInactives(view, overlapping) {
+export function getActivesAndInactives(view, overlapping) {
     const i = toInt(overlapping);
     let inactive = [];
     let active = [];

@@ -265,20 +265,20 @@ export function itemButton(imageSrc, size, clicked, hovered, unhovered, visible 
     const button = document.createElement('button');
     button.innerHTML = `<img src="${imageSrc}" alt="Button Icon">`;
     const img = button.querySelector('img');
+    button.classList.add('iconButton');
 
     // Style the button
     button.style.width = `${size}px`;
     button.style.height = `${size}px`;
-    button.style.border = 'none';
-    button.style.background = 'white';
-    button.style.padding = '0';
-    button.style.borderRadius = '50%';
-    button.style.cursor = 'pointer';
+    // button.style.border = 'none';
+    // button.style.background = 'white';
+    // button.style.padding = '0';
+    // button.style.borderRadius = '50%';
+    // button.style.cursor = 'pointer';
     button.style.visibility = visible ? 'visible' : 'hidden'; 
     button.style.pointerEvents = visible ? 'auto' : 'none'; 
-    button.style.flexShrink = '0';
+    // button.style.flexShrink = '0';
 
-    // Style the image to use the entire width and height of the button
     img.style.width = '100%';
     img.style.height = '100%';
     img.style.objectFit = 'cover'; 

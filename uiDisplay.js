@@ -4,11 +4,13 @@ import { interactionType, shapeType, hoverType, toToolType, toolType } from './s
 import { updateResultTab } from './resultTab.js';
 import { updateViewport } from './viewport.js';
 import { updateCodeTab } from './codeDisplay.js';
+import { updateHelpTab } from './helpTab.js';
 
 export class UIDisplay {
     constructor() {
         this.queryList = document.querySelector('#queryList');
         this.resultTab = document.querySelector('#resultTab');
+        this.helpTab = document.querySelector('#helpTab');
         this.titleList = document.querySelector('#titleList');
 
         this.queryBar = document.querySelector('#queryBar');
@@ -23,20 +25,29 @@ export class UIDisplay {
         this.titleOverwrite = document.querySelector('#titleOverwrite');
         this.titleAddButton = document.querySelector('#titleAddButton');
         this.titleToggle = document.querySelector('#titleToggle');
+
+        this.isDirty = false;
     }
 } 
 
 export function updateUi(uiDisplay, state) {
+    uiDisplay.isDirty = false;
     updateQueryBar(uiDisplay, state);
     updateQueryDisplay(uiDisplay, state);
-    
+
+
     updateTitleBar(uiDisplay, state);
 
     updateToolBar(uiDisplay, state);
 }
 
 export function initializeUiInput(uiDisplay, state) {
-
+        
+    setInterval(() => {
+        if(uiDisplay.isDirty)
+            updateUi(uiDisplay, state);
+    }, 200);
+    
     // query bar
     uiDisplay.queryBar.addEventListener('click', () => {
         if (state.queries.size === 1) {
@@ -73,7 +84,13 @@ export function initializeUiInput(uiDisplay, state) {
         const button = uiDisplay.toolBar.children[i];
 
         button.addEventListener('click', () => {
-            state.selectedToolTab = toToolType(i);
+            const tab = toToolType(i);
+            if (state.selectedToolTab === tab) {
+                state.selectedToolTab = toolType.none;
+                updateAll(state);
+                return;
+            }
+            state.selectedToolTab = tab;
             updateAll(state);
         });
     }
@@ -127,6 +144,7 @@ export function updateToolBar(uiDisplay, state) {
     }
 
     updateResultTab(state, uiDisplay);
+    updateHelpTab(state, uiDisplay);
     updateCodeTab(state, uiDisplay);
 }
 
@@ -239,12 +257,12 @@ function addTitleRow(uiDisplay, state, view) {
 
 export function updateQueryDisplay(uiDisplay, state) {
     toggleTabList(uiDisplay.queryList, state.areQueriesVisible);
+    uiDisplay.queryList.innerHTML = '';
 
-    if(!state.areQueriesVisible)
+    if (!state.areQueriesVisible) 
         return;
     
     const selectedQuery = state.selectedQuery;
-    uiDisplay.queryList.innerHTML = '';
     state.selectedQuery = selectedQuery;
     for (const query of state.queries.values()) {
         if(-query.id !== state.activeView.id && getShapesFromQuery(state, query.id).size !== 0)
@@ -295,16 +313,6 @@ export function addQueryRow(uiDisplay, state, query) {
         updateAll(state);
     });
 
-    if (state.selectedQuery !== null && state.selectedQuery.type === "query" && state.selectedQuery.id === query.id) {
-        setElementInteraction(queryRow, interactionType.Selected);
-        inputField.select();
-    }
-    else if (isDisabled) {
-        setElementInteraction(queryRow, interactionType.Disabled)
-    }
-    else if (state.hoveredQueries.has(query.id)) {
-        setElementInteraction(queryRow, interactionType.Highlighted)
-    }
 
     // Shape rows
     if (state.visibleQueryShapeRows.has(query.id)) {
@@ -315,6 +323,19 @@ export function addQueryRow(uiDisplay, state, query) {
     }
 
     uiDisplay.queryList.appendChild(listItem);
+
+    
+    if (state.selectedQuery !== null && state.selectedQuery.type === "query" && state.selectedQuery.id === query.id) {
+        setElementInteraction(queryRow, interactionType.Selected);
+        inputField.select();
+        console.log("sssss");
+    }
+    else if (isDisabled) {
+        setElementInteraction(queryRow, interactionType.Disabled)
+    }
+    else if (state.hoveredQueries.has(query.id)) {
+        setElementInteraction(queryRow, interactionType.Highlighted)
+    }
 }
 
 function createQueryEditButtons(state, query, row) {

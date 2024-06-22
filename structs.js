@@ -13,6 +13,7 @@ export const toolType = Object.freeze({
     help: 1,
     code: 2,
     result: 3,
+    none: -1,
 });
 
 export function toToolType(i) {
@@ -27,6 +28,7 @@ export const hoverType = Object.freeze({
     queryList: 0,
     viewport: 1,
     result: 2,
+    code: 3,
 });
 
 export const interactionType = Object.freeze({
@@ -64,9 +66,14 @@ export class GameState{
         this.visibleQueryShapeRows = new Set();
         this.selectedToolTab = toolType.result;
 
+        this.currentMinCode = 0;
+        this.currentCodeLength = 0;
+        this.codeHighlight = [];
+        this.codeViewportHighlight = null;
+
         this.queryTagRef = document.querySelector('#queryTags');
         this.boundingBoxRef = document.querySelector('#boundingBox');
-        initCodeTab(this);
+        initCodeTab(this, uiDisplay);
     }
 }
 
@@ -74,6 +81,7 @@ export class ViewportState{
     constructor(id, name) {
         this.id = id;
         this.name = name;
+        this.code = "";
         this.shapes = new Map();
         this.fragments = new Map();
 

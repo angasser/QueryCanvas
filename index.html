@@ -70,6 +70,18 @@
             gap: 4px;
         }
 
+        .codeHovered {
+            background-color: #cae5ef; 
+            color: black; 
+            border-radius: 3px; 
+        }
+
+        .codeViewHovered {
+            background-color: #cae5ef; 
+            color: black; 
+            border-radius: 3px; 
+        }
+
         .baseTitle{
             flex-grow: 1;
             text-align: left;
@@ -151,6 +163,26 @@
             align-items: center;
         }
 
+        .iconButton{
+            width: var(48); 
+            height: var(48); 
+            border: none;
+            background: white;
+            padding: 0;
+            border-radius: 50%;
+            cursor: pointer;
+            visibility: visible;
+            pointer-events: auto;
+            flex-shrink: 0;
+        }
+
+        .iconStyle{
+            width: 48px;
+            height: 48px;
+            /* object-fit: cover; */
+            transition: filter 0.3s;
+        }
+
         .baseButton{
             display: flex;
             background-color: #ffffff; 
@@ -162,6 +194,20 @@
 
         .baseButton:active {
             background-color: #a0c4d1;
+        }
+
+        .helpImage{
+            width: 90%;
+            height: auto;
+            margin-top: 64px;
+            margin-bottom: 8px;
+
+            border: 2px solid rgb(100, 100, 100);
+            border-radius: 32px;
+        }
+
+        .custom-break {
+            height: 128px;
         }
 
     </style> 
@@ -187,19 +233,23 @@
     <div id="toolTab">
         <div id="toolBar" style="display: flex;">
             <button class="topButton" style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 0 0 64px;">
-                Menu
+                <img class="iconStyle" src="./svgs/icons8-menu.svg"/>
             </button>
             <button class="topButton" style="border-radius: 0; flex: 0 0 64px;">
-                Help
+                <img class="iconStyle" src="./svgs/icons8-help-100.png"/>
             </button>
             <button class="topButton" style="border-radius: 0; flex: 1;">
-                Code
+                <div class="centerWrap">Code</div>
+                <img class="iconStyle" src="./svgs/icons8-code-64.png"/>
             </button>
             <button class="topButton" style="border-top-left-radius: 0; border-bottom-left-radius: 0; flex: 1;">
                 Result
+                <img class="iconStyle" src="./svgs/icons8-result-100.png"/>
             </button>
         </div>
         <div class="listTab" id="resultTab">
+        </div>
+        <div class="listTab" id="helpTab">
         </div>
         <div class="listTab" id="codeTab">
             <textarea id="code" name="code"></textarea>

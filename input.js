@@ -76,7 +76,7 @@ function initializeInput(handler, canvas) {
                 state.boxSelectionBox.maxY += dragOffset.y;
             }
 
-            updateAll(state);
+            updateAll(state, true);
         }
 
         if (handler.state.isBoxSelecting) {

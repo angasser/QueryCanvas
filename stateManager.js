@@ -1,12 +1,18 @@
-import { ViewportState, hoverType, shapeType } from './structs.js';
+import { ViewportState, hoverType, shapeType, toolType } from './structs.js';
 import { getColor, getFragmentsFromShapes, getQueriesFromShapes, getShapesFromFragments, getShapesFromQuery, numberToLetter, toInt, toShapes } from './util.js';
 import { updateUi } from './uiDisplay.js';
 import { updateViewport, findEmpySpace } from './viewport.js';
 
-export function updateAll(state) {
-
+export function updateAll(state, uiDelayable = false) {
+    console.log("updateAll");
     updateViewport(state.viewport, state);
-    updateUi(state.uiDisplay, state);
+
+    if (uiDelayable) {
+        state.uiDisplay.isDirty = true;
+    }
+    else {
+        updateUi(state.uiDisplay, state);
+    }
 }
 
 export function createNewQuery(state, idOverride = null, addShape = true) {
@@ -151,6 +157,22 @@ export function addNewViewport(state, stayInCurrentViewport = false) {
     }
     return id;
 }
+
+export function addNewCodeViewport(state) {
+    let id = 0;
+    while (state.viewportStates.has(id))
+        id++;
+
+    const name = `View ${numberToLetter(id)}`;
+    const newView = new ViewportState(id, name);
+
+    state.viewportStates.set(id, newView);
+    createNewQuery(state, -id, false);
+    
+    switchViewport(state, id);
+    return id;
+}
+
 
 export function createViewportFromShapes(state, shapeIds) {
     const shapes = new Map();
