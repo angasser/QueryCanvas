@@ -1,4 +1,3 @@
-import { initCodeTab } from "./codeDisplay.js";
 import { addNewViewport, createNewQuery } from "./stateManager.js";
 import { toInt } from "./util.js";
 
@@ -73,7 +72,6 @@ export class GameState{
 
         this.queryTagRef = document.querySelector('#queryTags');
         this.boundingBoxRef = document.querySelector('#boundingBox');
-        initCodeTab(this, uiDisplay);
     }
 }
 

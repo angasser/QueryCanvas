@@ -5,77 +5,91 @@ import { toggleTabList } from "./uiDisplay.js";
 import { areSetsEqual, getFragmentsFromShapes, isSubset, toInt, toShapes } from "./util.js";
 import { getAllOverlapping } from "./viewport.js";
 
-const CODE_INPUT_SEPERATOR = "# Code ##########################################################\n";
 const LINE_BREAK_LENGTH = 64;
 
-export function initCodeTab(state, uiDisplay) {
-    uiDisplay.codeTab = document.querySelector('#codeTab');
-    
-    const box = document.getElementById("code");
-    
-    uiDisplay.codeTab.style.fontSize = '20px';
+export class CodeDisplay{
+    constructor() {
+        this.codeTab = document.querySelector('#codeTab');
+        
+        this.originalText = "";
 
-    var editor = CodeMirror.fromTextArea(box, {
-        lineNumbers: true,
-        mode: "python",
-        theme: "default",
-        viewportMargin: Infinity
-    });
+        this.selectedExpression = null;
 
-    uiDisplay.editor = editor;
-    var css = `
-        .CodeMirror {
-            height: auto !important;
-            overflow-y: hidden !important; 
-        }
-        .CodeMirror-scroll {
-            overflow-y: hidden !important;
-            height: auto !important;
-            max-height: calc(100vh - 128px);
-        }
-    `;
-
-    var style = document.createElement('style');
-    if (style.styleSheet) {
-        style.styleSheet.cssText = css;
-    } else {
-        style.appendChild(document.createTextNode(css));
+        // this.codeHighlight = [];
+        // this.codeViewportHighlight = null;
     }
+}
 
-    document.head.appendChild(style);
-    editor.on('focus', function () {
-        // updateCaret(state, uiDisplay);
-    });
-    
-    editor.on("cursorActivity", function () {
-        updateCaret(state, uiDisplay);
-    });
+export function initialzeCodeInput(state, codeDisplay) {
+    const box = document.getElementById("code");
+    box.style.height = `calc(100vh - 128px)`;
 
-    // Listener for text edits
-    editor.on("change", function() {
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs' }});
+
+    require(['vs/editor/editor.main'], function() {
+        codeDisplay.editor = monaco.editor.create(box, {
+            value: "// Type your code here \n t = True",
+            language: 'python',
+            theme: 'default',
+            minimap: { enabled: false },
+            fontSize: 20,
+            scrollBeyondLastLine: false, 
+            scrollbar: {
+                vertical: 'auto', 
+                horizontal: 'auto', 
+                useShadows: false, 
+                verticalScrollbarSize: 10, 
+                horizontalScrollbarSize: 10,
+            },
+        });
+
+        codeDisplay.editor.onDidFocusEditorText(() => {
+            console.log('Editor is focused');
+        });
+
+        // Listener for cursor position changes
+        codeDisplay.editor.onDidChangeCursorPosition((e) => {
+            const selection = codeDisplay.editor.getSelection();
+
+            const startPosition = { lineNumber: selection.startLineNumber, column: selection.startColumn };
+            const endPosition = { lineNumber: selection.endLineNumber, column: selection.endColumn };
+            updateCaret(state, codeDisplay, startPosition, endPosition);
+
+
+        });
+
+        // Listener for text changes in the editor
+        codeDisplay.editor.onDidChangeModelContent((e) => {
+            console.log('Text in the editor has changed');
+        });
+        updateCodeTab(state, codeDisplay);
     });
 }
 
-export function updateCodeTab(state, uiDisplay) {
+export function updateCodeTab(state, codeDisplay) {
+    if (!codeDisplay.editor) {
+        return;
+    }
+
     if (state.selectedToolTab !== toolType.code) {
-        toggleTabList(uiDisplay.codeTab, false);
+        toggleTabList(codeDisplay.codeTab, false);
         return;
     }
 
 
-    toggleTabList(uiDisplay.codeTab, true);
+    toggleTabList(codeDisplay.codeTab, true);
+    return;
 
-
-    const cursor = uiDisplay.editor.getCursor();
-    const content = uiDisplay.editor.getValue();
-    const expLength = state.activeView.code.length;
+    const cursor = codeDisplay.editor.getCursor();
+    const content = codeDisplay.editor.getValue();
+    const expLength = state.activeTask.activeView.code.length;
     const cursorIndex = posToIndex(content, cursor);
     const possibleStartIndex = Math.max(0, cursorIndex - expLength - 1);
 
-    console.log(cursorIndex, content, content.substring(possibleStartIndex, cursorIndex + expLength),state.activeView.code,
-        content.substring(possibleStartIndex, cursorIndex + expLength).indexOf(state.activeView.code));
-    let pos = content.substring(possibleStartIndex, cursorIndex + expLength + 2).indexOf(state.activeView.code);
-    if (state.activeView.code === "") {
+    console.log(cursorIndex, content, content.substring(possibleStartIndex, cursorIndex + expLength),state.activeTask.activeView.code,
+        content.substring(possibleStartIndex, cursorIndex + expLength).indexOf(state.activeTask.activeView.code));
+    let pos = content.substring(possibleStartIndex, cursorIndex + expLength + 2).indexOf(state.activeTask.activeView.code);
+    if (state.activeTask.activeView.code === "") {
         pos = cursorIndex;
     }
     else if (pos === -1) {
@@ -104,7 +118,7 @@ export function updateCodeTab(state, uiDisplay) {
     }
 
     state.currentCodeLength = mid.length;
-    uiDisplay.editor.setValue(pre + mid + post);
+    codeDisplay.editor.setValue(pre + mid + post);
 
     state.codeHighlight = [];
     const newLineStart = (pre.match(/\n/g) || []).length;
@@ -126,7 +140,7 @@ export function updateCodeTab(state, uiDisplay) {
 
         if (value.isHovered) {
             highlighted = true;
-            uiDisplay.editor.markText({line: newlineCount, ch: charCount}, {line: newlineCount, ch: charCount + value.content.length}, {className: "codeHovered"});
+            codeDisplay.editor.markText({line: newlineCount, ch: charCount}, {line: newlineCount, ch: charCount + value.content.length}, {className: "codeHovered"});
         }
 
         state.codeHighlight.push({
@@ -138,14 +152,14 @@ export function updateCodeTab(state, uiDisplay) {
 
     state.codeViewportHighlight = { start: { line: newLineStart, ch: charCountStart }, end: { line: newlineCount, ch: charsSinceLastBreak(pre + mid) } };
     if (!highlighted) {
-        uiDisplay.editor.markText(state.codeViewportHighlight.start, state.codeViewportHighlight.end, {className: "codeViewHovered"});
+        codeDisplay.editor.markText(state.codeViewportHighlight.start, state.codeViewportHighlight.end, {className: "codeViewHovered"});
     }
 
-    state.activeView.code = mid;
-    uiDisplay.editor.setCursor(clampToSelection(cursor, state.codeViewportHighlight));
+    state.activeTask.activeView.code = mid;
+    codeDisplay.editor.setCursor(clampToSelection(cursor, state.codeViewportHighlight));
 }
 export function convertVennToString(state) {
-    const viewport = state.activeView;
+    const viewport = state.activeTask.activeView.queries;
     const expStrs = [];
     for (const frag of viewport.fragments.keys()) {
         createExpressionString(state, expStrs, frag);
@@ -154,37 +168,24 @@ export function convertVennToString(state) {
     return expStrs;
 }
 
-function updateCaret(state, uiDisplay) {
-    const codePos = uiDisplay.editor.getCursor();
+function updateCaret(state, codeDisplay, startPosition, endPosition) {
 
-    if (state.codeViewportHighlight === null)
-        return;
 
-    if (!uiDisplay.editor.hasFocus())
-        return;
 
-    // Needs to be empty viewport
-    if (!isInSelection(codePos, state.codeViewportHighlight)) {
-        return;
-        console.log("REEE", codePos, state.activeView.shapes.size, uiDisplay.editor.getValue(), state.codeViewportHighlight);
-        if(state.activeView.shapes.size > 0)
-            addNewCodeViewport(state);
-        return;
+    if (codeDisplay.selectedExpression !== null &&
+        (!isInSelection(startPosition, codeDisplay.selectedExpression) ||
+        !isInSelection(endPosition, codeDisplay.selectedExpression))) {
+        
+        codeDisplay.selectedExpression = null;
+        // Update code
     }
-    for(const h of state.codeHighlight) {
-        const start = h.startPos;
-        const end = h.endPos;
-        if (codePos.line === start.line && codePos.ch >= start.ch && codePos.ch <= end.ch) {
-            const ret = h.fragments();
-            if (state.hoveringType === hoverType.code  &&
-                areSetsEqual
-                (state.hoveredFragments, ret))
-                return;
-            setHoverFromFragments(state, ret, hoverType.code);
-            uiDisplay.editor.setCursor(clampToSelection(codePos, state.codeViewportHighlight));
-            updateAll(state);
-        }
-    }
+
+    if (codeDisplay.selectedExpression === null)
+        return;
+
+    const intPos = posToIndex(codeDisplay.originalText, position);
+    const exp = getBooleanExpression(codeDisplay, intPos);
+    
 }
 
 function isInSelection(pos, bounds) {
@@ -199,10 +200,12 @@ function isInSelection(pos, bounds) {
     return true;
 }
 
-function checkForQuery(state, pos) {
-    const content = uiDisplay.editor.getValue();
+function getBooleanExpression(codeDisplay, selectedIndex) {
+    const content = codeDisplay.originalText;
 
+    
 }
+
 
 function clampToSelection(pos, bounds) {
     if (pos.line < bounds.start.line)
@@ -261,7 +264,7 @@ function allFalseString(state, l, expStrs)
         content: str,
         substr: [],
         addParentecies: true,
-        isHovered: state.hoveredShapes.size > 0 && isSubset(state.hoveredShapes, new Set(l)),
+        isHovered: state.activeTask.hoveredShapes.size > 0 && isSubset(state.activeTask.hoveredShapes, new Set(l)),
         fragments: () => {
             return getFragmentsFromShapes(state, l);
         }
@@ -271,7 +274,7 @@ function allFalseString(state, l, expStrs)
 
 function query1String(state, frag, c1, expStrs) {
     let str = "";
-    if (state.activeView.allInactiveFragments.has(frag))
+    if (state.activeTask.activeView.allInactiveFragments.has(frag))
         str += "not ";
 
     str += queryString(state, c1);
@@ -280,7 +283,7 @@ function query1String(state, frag, c1, expStrs) {
         content: str,
         substr: [],
         addParentecies: false,
-        isHovered: state.hoveredShapes.has(c1),
+        isHovered: state.activeTask.hoveredShapes.has(c1),
         fragments: () => {
             return new Set([toInt([c1])]);
         }
@@ -289,7 +292,7 @@ function query1String(state, frag, c1, expStrs) {
 }
 
 function allTrueExceptString(state, overlapping, expStrs) {
-    const t = getActivesAndInactives(state.activeView, overlapping);
+    const t = getActivesAndInactives(state.activeTask.activeView.queries, overlapping);
     const active = t.active;
     const inactive = t.inactive;
     
@@ -307,7 +310,7 @@ function allTrueExceptString(state, overlapping, expStrs) {
         content: str,
         substr: [],
         addParentecies: true,
-        isHovered: active.some((x) => state.hoveredFragments.has(x)) && !inactive.some((x) => state.hoveredFragments.has(x)),
+        isHovered: active.some((x) => state.activeTask.activeView.hoveredFragments.has(x)) && !inactive.some((x) => state.activeTask.activeView.hoveredFragments.has(x)),
         fragments: () => {
             return new Set(active);
         }
@@ -332,7 +335,7 @@ function allTrueExceptString(state, overlapping, expStrs) {
             content: substr,
             addParentecies: true,
             substr: [],
-            isHovered: state.hoveredFragments.has(ind),
+            isHovered: state.activeTask.activeView.hoveredFragments.has(ind),
             fragments: () => {
                 return new Set([ind]);
             }
@@ -358,7 +361,7 @@ function allTrueString(state, l, expStrs)
         content: str,
         substr: [],
         addParentecies: false,
-        isHovered: state.hoveredShapes.size > 0 && isSubset(state.hoveredShapes, new Set(l)),
+        isHovered: state.activeTask.hoveredShapes.size > 0 && isSubset(state.activeTask.hoveredShapes, new Set(l)),
         fragments: () => {
             return getFragmentsFromShapes(state, l);
         }
@@ -373,9 +376,9 @@ function quer2String(state, c1, c2, expStrs)
     const i1 = toInt([c1]);
     const i2 = toInt([c2]);
     const i12 = toInt([c1, c2]);
-    const c1Active = !state.activeView.allInactiveFragments.has(i1);
-    const c2Active = !state.activeView.allInactiveFragments.has(i2);
-    const bothActive = !state.activeView.allInactiveFragments.has(i12);
+    const c1Active = !state.activeTask.activeView.allInactiveFragments.has(i1);
+    const c2Active = !state.activeTask.activeView.allInactiveFragments.has(i2);
+    const bothActive = !state.activeTask.activeView.allInactiveFragments.has(i12);
 
     if (c1Active && c2Active && bothActive) {
         str += queryString(state, c1);
@@ -416,7 +419,7 @@ function quer2String(state, c1, c2, expStrs)
         content: str,
         substr: [],
         addParentecies: true,
-        isHovered: state.hoveredShapes.size > 0 && isSubset(state.hoveredShapes, new Set([c1, c2])),
+        isHovered: state.activeTask.hoveredShapes.size > 0 && isSubset(state.activeTask.hoveredShapes, new Set([c1, c2])),
         fragments: () => {
             return new Set([i1, i2, i12]);
         }
@@ -438,14 +441,14 @@ function normalString(state, l, overlapping, expStrs)
     }
 
     const i = toInt(l);
-    if (state.activeView.allInactiveFragments.has(i))
+    if (state.activeTask.activeView.allInactiveFragments.has(i))
         throw new Error("Fragment is inactive");
 
     const ob = {
         content: str,
         substr: [],
         addParentecies: true,
-        isHovered: state.hoveredFragments.has(i),
+        isHovered: state.activeTask.activeView.hoveredFragments.has(i),
         fragments: () => {
             return new Set([i]);
         }
@@ -532,9 +535,6 @@ export function getIndentation(code) {
     return inde;
 }
 
-export function loadCode(state) {
-    const sel = uiDisplay.editor
-}
 
 function splitIntoLines(code) {
     const lines = [];
@@ -580,8 +580,8 @@ function splitIntoLines(code) {
 }
 
 function queryString(state, shapeId) {
-    const queryId = state.activeView.shapes.get(shapeId).queryId;
-    const query = state.queries.get(queryId);
+    const queryId = state.activeTask.activeView.shapes.get(shapeId).queryId;
+    const query = state.activeTask.queries.get(queryId);
     let modifiedContent = query.content.replace(/ /g, "_");
     modifiedContent = modifiedContent.replace(/[^a-zA-Z0-9_]/g, "");
     return modifiedContent;
