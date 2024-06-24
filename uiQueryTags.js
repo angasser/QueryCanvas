@@ -1,7 +1,7 @@
 import { getQueryCircle } from "./uiDisplay.js";
 
 export function updateQueryTags(state) {
-    state.queryTagRef.innerHTML = '';
+    state.uiDisplay.queryTagRef.innerHTML = '';
 
     for (const shape of state.activeView.shapes.values()) {
         addQueryTag(state, shape);
@@ -13,7 +13,7 @@ export function updateQueryTags(state) {
 export function updateBoxHover(state) {
         if (state.boxSelectionBox !== null) {
         const box = state.boxSelectionBox;
-        const boxRef = state.boundingBoxRef.style;
+        const boxRef = state.uiDisplay.boundingBoxRef.style;
         boxRef.display = 'block';
         boxRef.left = `${box.minX}px`;
         boxRef.top = `${box.minY}px`;
@@ -21,7 +21,7 @@ export function updateBoxHover(state) {
         boxRef.height = `${box.maxY - box.minY-4}px`;
     }
     else
-        state.boundingBoxRef.style.display = 'none';
+        state.uiDisplay.boundingBoxRef.style.display = 'none';
 }
 
 function addQueryTag(state, shape) {
@@ -44,5 +44,5 @@ function addQueryTag(state, shape) {
         ${query.content}
     `;
 
-    state.queryTagRef.appendChild(tag);
+    state.uiDisplay.queryTagRef.appendChild(tag);
 }

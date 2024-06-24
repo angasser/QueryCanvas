@@ -26,6 +26,10 @@ export class UIDisplay {
         this.titleAddButton = document.querySelector('#titleAddButton');
         this.titleToggle = document.querySelector('#titleToggle');
 
+        this.queryTagRef = document.querySelector('#queryTags');
+        this.boundingBoxRef = document.querySelector('#boundingBox');
+
+
         this.isDirty = false;
     }
 } 

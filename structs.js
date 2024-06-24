@@ -64,14 +64,11 @@ export class GameState{
         this.isViewportSelectionVisible = false;
         this.visibleQueryShapeRows = new Set();
         this.selectedToolTab = toolType.result;
+    }
+}
 
-        this.currentMinCode = 0;
-        this.currentCodeLength = 0;
-        this.codeHighlight = [];
-        this.codeViewportHighlight = null;
-
-        this.queryTagRef = document.querySelector('#queryTags');
-        this.boundingBoxRef = document.querySelector('#boundingBox');
+export class TaskState{
+    constructor() {
     }
 }
 
