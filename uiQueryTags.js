@@ -3,7 +3,7 @@ import { getQueryCircle } from "./uiDisplay.js";
 export function updateQueryTags(state) {
     state.uiDisplay.queryTagRef.innerHTML = '';
 
-    for (const shape of state.activeView.shapes.values()) {
+    for (const shape of state.activeState.activeView.shapes.values()) {
         addQueryTag(state, shape);
     }
 
@@ -11,8 +11,8 @@ export function updateQueryTags(state) {
 }
 
 export function updateBoxHover(state) {
-        if (state.boxSelectionBox !== null) {
-        const box = state.boxSelectionBox;
+        if (state.activeState.boxSelectionBox !== null) {
+        const box = state.activeState.boxSelectionBox;
         const boxRef = state.uiDisplay.boundingBoxRef.style;
         boxRef.display = 'block';
         boxRef.left = `${box.minX}px`;
@@ -38,7 +38,7 @@ function addQueryTag(state, shape) {
     tag.style.zIndex = '100';
     tag.style.fontSize = '24px';
     
-    const query = state.queries.get(shape.queryId);
+    const query = state.activeState.queries.get(shape.queryId);
     tag.innerHTML = `
         ${getQueryCircle(state, query.id)}
         ${query.content}

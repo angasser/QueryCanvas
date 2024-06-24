@@ -27,26 +27,26 @@ function initializeInput(handler, canvas) {
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
-        if (state.boxSelectionBox !== null && 
-            mouseX >= state.boxSelectionBox.minX &&
-            mouseX <= state.boxSelectionBox.maxX &&
-            mouseY >= state.boxSelectionBox.minY &&
-            mouseY <= state.boxSelectionBox.maxY
+        if (state.activeState.boxSelectionBox !== null && 
+            mouseX >= state.activeState.boxSelectionBox.minX &&
+            mouseX <= state.activeState.boxSelectionBox.maxX &&
+            mouseY >= state.activeState.boxSelectionBox.minY &&
+            mouseY <= state.activeState.boxSelectionBox.maxY
         ) {
             handler.isDragging = true;
             handler.dragStartPoint = { x: mouseX, y: mouseY };
             handler.dragLastPoint = { x: mouseX, y: mouseY };
-            state.selectedShapes = state.boxSelectedShapes; 
+            state.activeState.selectedShapes = state.activeState.boxSelectedShapes; 
         }
-        else if (state.hoveringType === hoverType.viewport && state.hoveredQueries.size !== 0) {
+        else if (state.activeState.hoveringType === hoverType.viewport && state.activeState.hoveredQueries.size !== 0) {
             handler.isDragging = true;
             handler.dragStartPoint = { x: mouseX, y: mouseY };
             handler.dragLastPoint = { x: mouseX, y: mouseY };
-            state.selectedShapes = state.hoveredShapes;
-            state.boxSelectionBox = null;
+            state.activeState.selectedShapes = state.activeState.hoveredShapes;
+            state.activeState.boxSelectionBox = null;
         }
         else {
-            handler.state.isBoxSelecting = true;
+            handler.state.activeState.isBoxSelecting = true;
             handler.dragStartPoint = { x: mouseX, y: mouseY };
         }
     });
@@ -63,23 +63,23 @@ function initializeInput(handler, canvas) {
 
             handler.dragLastPoint = { x: mouseX, y: mouseY };
 
-            for (const shapeId of state.selectedShapes) {
-                const shape = state.activeView.shapes.get(shapeId);
+            for (const shapeId of state.activeState.selectedShapes) {
+                const shape = state.activeState.activeView.shapes.get(shapeId);
                 shape.center.x += dragOffset.x;
                 shape.center.y += dragOffset.y;
             }
 
-            if (state.boxSelectionBox !== null) {
-                state.boxSelectionBox.minX += dragOffset.x;
-                state.boxSelectionBox.minY += dragOffset.y;
-                state.boxSelectionBox.maxX += dragOffset.x;
-                state.boxSelectionBox.maxY += dragOffset.y;
+            if (state.activeState.boxSelectionBox !== null) {
+                state.activeState.boxSelectionBox.minX += dragOffset.x;
+                state.activeState.boxSelectionBox.minY += dragOffset.y;
+                state.activeState.boxSelectionBox.maxX += dragOffset.x;
+                state.activeState.boxSelectionBox.maxY += dragOffset.y;
             }
 
             updateAll(state, true);
         }
 
-        if (handler.state.isBoxSelecting) {
+        if (handler.state.activeState.isBoxSelecting) {
             setBoxHover(handler, mouseX, mouseY, state);
         }
         else {
@@ -92,19 +92,19 @@ function initializeInput(handler, canvas) {
             const tolerance = 4; 
             if (Math.abs(handler.dragStartPoint.x - handler.dragLastPoint.x) <= tolerance &&
                 Math.abs(handler.dragStartPoint.y - handler.dragLastPoint.y) <= tolerance) {
-                toggleInactiveFragment(handler.state, state.hoveredShapes);
+                toggleInactiveFragment(handler.state, state.activeState.hoveredShapes);
             }
 
             handler.isDragging = false;
             handler.dragStartPoint = null;
 
-            state.selectedShapes = new Set();
+            state.activeState.selectedShapes = new Set();
         }
 
-        if (handler.state.isBoxSelecting) {
-            handler.state.isBoxSelecting = false;
-            handler.state.boxSelectionBox = state.hoveredShapes.size === 0 ? null : 
-                getShapeBoundingBox(handler.state, handler.state.hoveredShapes, 16);
+        if (handler.state.activeState.isBoxSelecting) {
+            handler.state.activeState.isBoxSelecting = false;
+            handler.state.activeState.boxSelectionBox = state.activeState.hoveredShapes.size === 0 ? null : 
+                getShapeBoundingBox(handler.state, handler.state.activeState.hoveredShapes, 16);
 
             updateQueryTags(state);
         }
@@ -117,7 +117,7 @@ function initializeInput(handler, canvas) {
         const hoveredShapes = getShapesUnderPoint({ x: mouseX, y: mouseY }, state);
         if (hoveredShapes.size === 1) {
             for (const shapeId of hoveredShapes) {
-                const shape = state.activeView.shapes.get(shapeId);
+                const shape = state.activeState.activeView.shapes.get(shapeId);
                 if (shape.queryId <= 0) {
                     switchViewport(state, -shape.queryId);
                 }
@@ -131,22 +131,22 @@ function setBoxHover(handler, mouseX, mouseY, state) {
     const minY = Math.min(handler.dragStartPoint.y, mouseY);
     const maxX = Math.max(handler.dragStartPoint.x, mouseX);
     const maxY = Math.max(handler.dragStartPoint.y, mouseY);
-    state.boxSelectionBox = {
+    state.activeState.boxSelectionBox = {
         minX: minX, 
         minY: minY,
         maxX: maxX,
         maxY: maxY,
     }
-    const hoveredShapes = getShapesInBox(state, state.boxSelectionBox);
+    const hoveredShapes = getShapesInBox(state, state.activeState.boxSelectionBox);
     const hoveredQueries = getQueriesFromShapes(state, hoveredShapes);
     
     updateBoxHover(state);
-    if (state.hoveringType === hoverType.viewport &&
-        areSetsEqual(hoveredShapes, state.hoveredShapes) &&
-        areSetsEqual(hoveredQueries, state.hoveredQueries))
+    if (state.activeState.hoveringType === hoverType.viewport &&
+        areSetsEqual(hoveredShapes, state.activeState.hoveredShapes) &&
+        areSetsEqual(hoveredQueries, state.activeState.hoveredQueries))
         return; 
     
-    state.boxSelectedShapes = hoveredShapes;
+    state.activeState.boxSelectedShapes = hoveredShapes;
     setHoverFromShapes(state, hoveredShapes, hoverType.viewport);
     updateAll(state);
 }
@@ -155,7 +155,7 @@ function setPointHover(mouseX, mouseY, state) {
     const hoveredShapes = getShapesUnderPoint({ x: mouseX, y: mouseY }, state);
     const i = toInt(hoveredShapes);
     
-    if (state.hoveredFragments.has(i))
+    if (state.activeState.hoveredFragments.has(i))
         return;
 
     setHoverFromFragments(state, new Set([i]), hoverType.viewport);

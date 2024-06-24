@@ -117,7 +117,7 @@ export function getShapeBoundingBox(state, shapeIds, padding) {
     let maxY = -Infinity;
 
     for (const shapeId of shapeIds) {
-        const shape = state.activeView.shapes.get(shapeId);
+        const shape = state.activeState.activeView.shapes.get(shapeId);
         minX = Math.min(minX, shape.center.x - shape.radius);
         maxX = Math.max(maxX, shape.center.x + shape.radius);
 
@@ -137,7 +137,7 @@ export function getShapeBoundingBox(state, shapeIds, padding) {
 
 export function getShapesInBox(state, box) {
     const shapes = new Set();
-    for (const shape of state.activeView.shapes.values()) {
+    for (const shape of state.activeState.activeView.shapes.values()) {
         const center = shape.center;
         if(center.x >= box.minX && center.x <= box.maxX && center.y >= box.minY && center.y <= box.maxY) {
             shapes.add(shape.shapeId);
@@ -204,7 +204,7 @@ export function getFragmentsFromShapes(state, shapes) {
 
     for (const shape of shapes) {
         const i = toInt([shape]);
-        for (const frag of state.activeView.fragments.keys()) {
+        for (const frag of state.activeState.activeView.fragments.keys()) {
             if (isIntSubset(i, frag))
                 fragments.add(frag);
         }
@@ -231,14 +231,14 @@ export function isIntSubset(subset, parent) {
 export function getQueriesFromShapes(state, shapes) {
     const queries = new Set();
     for (const shape of shapes) {
-        queries.add(state.activeView.shapes.get(shape).queryId);
+        queries.add(state.activeState.activeView.shapes.get(shape).queryId);
     }
     return queries;
 }
 
 export function getShapesFromQuery(state, queryId) {
     const shapes = new Set();
-    for (const shape of state.activeView.shapes.values()) {
+    for (const shape of state.activeState.activeView.shapes.values()) {
         if (shape.queryId === queryId) {
             shapes.add(shape.shapeId);
         }

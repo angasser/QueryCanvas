@@ -41,12 +41,20 @@ export class GameState{
     constructor(viewport, uiDisplay) {
         this.viewport = viewport;
         this.uiDisplay = uiDisplay;
-        this.isDirty = false;
 
+        this.activeState = new TaskState();        
+        this.states = new Map([[0, this.activeState]]);
+        createNewQuery(this, 0, false);
+
+        this.selectedToolTab = toolType.result;
+    }
+}
+
+export class TaskState{
+    constructor() {
         this.queries = new Map();
         this.activeView = new ViewportState(0, "Main View");
         this.viewportStates = new Map([[0, this.activeView]]);
-        createNewQuery(this, 0, false);
 
         this.hoveringType = hoverType.viewport;
         this.hoveredQueries = new Set();
@@ -63,12 +71,6 @@ export class GameState{
         this.areQueriesVisible = false;
         this.isViewportSelectionVisible = false;
         this.visibleQueryShapeRows = new Set();
-        this.selectedToolTab = toolType.result;
-    }
-}
-
-export class TaskState{
-    constructor() {
     }
 }
 
