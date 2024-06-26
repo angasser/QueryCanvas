@@ -5,12 +5,14 @@ import { updateResultTab } from './resultTab.js';
 import { updateViewport } from './viewport.js';
 import { updateCodeTab } from './codeDisplay.js';
 import { updateHelpTab } from './helpTab.js';
+import { updateMenuTab } from './menuTab.js';
 
 export class UIDisplay {
     constructor() {
         this.queryList = document.querySelector('#queryList');
         this.resultTab = document.querySelector('#resultTab');
         this.helpTab = document.querySelector('#helpTab');
+        this.menuTab = document.querySelector('#menuTab');
         this.titleList = document.querySelector('#titleList');
 
         this.queryBar = document.querySelector('#queryBar');
@@ -36,6 +38,7 @@ export class UIDisplay {
 
 export function updateUi(uiDisplay, state) {
     uiDisplay.isDirty = false;
+
     updateQueryBar(uiDisplay, state);
     updateQueryDisplay(uiDisplay, state);
 
@@ -54,11 +57,11 @@ export function initializeUiInput(uiDisplay, state) {
     
     // query bar
     uiDisplay.queryBar.addEventListener('click', () => {
-        if (state.activeState.queries.size === 1) {
-            createNewQuery(state);
+        if (state.activeExpression.queries.size === 1) {
+            createNewQuery(state, state.activeExpression);
             return;
         }
-        state.activeState.areQueriesVisible = !state.activeState.areQueriesVisible;
+        state.activeExpression.areQueriesVisible = !state.activeExpression.areQueriesVisible;
         updateAll(state);
     });
 
@@ -66,8 +69,8 @@ export function initializeUiInput(uiDisplay, state) {
     uiDisplay.titleInput.addEventListener('blur', function (event) {
         const val = event.target.value;
 
-        const id = state.activeState.selectedQuery === null || state.activeState.selectedQuery.type === "query" ? state.activeState.activeView.id : state.activeState.selectedQuery.id;
-        state.activeState.selectedQuery = null;
+        const id = state.activeExpression.selectedQuery === null || state.activeExpression.selectedQuery.type === "query" ? state.activeExpression.activeView.id : state.activeExpression.selectedQuery.id;
+        state.activeExpression.selectedQuery = null;
         if (val.length > 0) {
             updateViewportName(state, id, val);
         }
@@ -102,25 +105,30 @@ export function initializeUiInput(uiDisplay, state) {
 
 
 export function updateQueryBar(uiDisplay, state) {
-    const noQueries = state.activeState.queries.size <= 1 || (state.activeState.queries.size === 2 && state.activeState.viewportStates.size > 1 && state.activeState.activeView.id !== 0);
+    uiDisplay.queryAddButton.innerHTML = '';
+    toggleVisiblity(uiDisplay.queryBar, state.hasExp());
+
+    if (!state.hasExp())
+        return;
+
+    const noQueries = state.activeExpression.queries.size <= 1 || (state.activeExpression.queries.size === 2 && state.activeExpression.viewportStates.size > 1 && state.activeExpression.activeView.id !== 0);
     if (noQueries) {
-        state.activeState.areQueriesVisible = false;
+        state.activeExpression.areQueriesVisible = false;
     }
 
     const visibilityIcon =
-        state.activeState.areQueriesVisible ? `./svgs/icons8-up-100.png` :
+        state.activeExpression.areQueriesVisible ? `./svgs/icons8-up-100.png` :
             `./svgs/icons8-down-button-100.png`;
 
     const queryToggle = `<img style="visibility: ${noQueries ? "hidden" : "visible"};" src="${visibilityIcon}" alt="Icon" width="48">`;
     uiDisplay.queryToggle.innerHTML = queryToggle;
 
-    const buttonText = noQueries ? "Create new Query" : state.activeState.areQueriesVisible ? "Queries" : "Show Queries";
+    const buttonText = noQueries ? "Create new Query" : state.activeExpression.areQueriesVisible ? "Queries" : "Show Queries";
     uiDisplay.queryTitleText.innerHTML = buttonText;
 
-    uiDisplay.queryAddButton.innerHTML = '';
     uiDisplay.queryAddButton.appendChild(itemButton("./svgs/icons8-plus.svg", 48, (event) => {
         event.stopPropagation();
-        createNewQuery(state);
+        createNewQuery(state, state.activeExpression);
     }, () => {
         uiDisplay.queryTitleText.innerHTML = "Create new Query";
     }, () => {
@@ -139,7 +147,7 @@ export function updateToolBar(uiDisplay, state) {
         }
 
         if (i === toolType.result) {
-            const disabled = state.activeState.activeView.shapes.size === 0;
+            const disabled = !state.hasExp() || state.activeExpression.activeView.shapes.size === 0;
             button.disabled = disabled;
             if(disabled) {
                 setElementInteraction(button, interactionType.Disabled);
@@ -149,21 +157,28 @@ export function updateToolBar(uiDisplay, state) {
 
     updateResultTab(state, uiDisplay);
     updateHelpTab(state, uiDisplay);
-    updateCodeTab(state, uiDisplay);
+    updateCodeTab(state, state.codeDisplay);
+    updateMenuTab(state, uiDisplay);
 }
 
 function updateTitleBar(uiDisplay, state) {
     // When destroying elements, selectedQuery may be set to null (through unhover listeners)
-    const selectedQuery = state.activeState.selectedQuery;
     uiDisplay.titleAddButton.innerHTML = '';
     uiDisplay.titleToggle.innerHTML = '';
     uiDisplay.titleList.innerHTML = '';
-    state.activeState.selectedQuery = selectedQuery;
+
+    if (!state.hasExp()) {
+        toggleTabList(uiDisplay.titleList, false);
+        return;
+    }
+
+    const selectedQuery = state.activeExpression.selectedQuery;
+    state.activeExpression.selectedQuery = selectedQuery;
     // uiDisplay.titleBar.style.position = 'relative';
 
     
     
-    let selectedId = state.activeState.activeView.id;
+    let selectedId = state.activeExpression.activeView.id;
     let editableId = null;
     if (selectedQuery !== null && selectedQuery.type !== "query") {
         editableId = selectedQuery.id;
@@ -174,14 +189,14 @@ function updateTitleBar(uiDisplay, state) {
         uiDisplay.titleBar.style.backgroundColor = "white";
     }
     else {
-        const query = state.activeState.queries.get(-selectedId);
+        const query = state.activeExpression.queries.get(-selectedId);
         uiDisplay.titleBar.style.backgroundColor = query.color;
     }
         
     const titleInput = uiDisplay.titleInput;
-    titleInput.setAttribute("value", state.activeState.viewportStates.get(selectedId).getName());
+    titleInput.setAttribute("value", state.activeExpression.viewportStates.get(selectedId).name);
 
-    const isBoxSelected = state.activeState.boxSelectionBox !== null && state.activeState.boxSelectedShapes.size > 0;
+    const isBoxSelected = state.activeExpression.boxSelectionBox !== null && state.activeExpression.boxSelectedShapes.size > 0;
     uiDisplay.titleOverwrite.innerHTML = isBoxSelected ? "Create Variable from selection" : "Add new Variable";
     uiDisplay.titleOverwrite.style.visibility = "hidden";
     uiDisplay.titleInput.style.visibility = "visible";
@@ -189,14 +204,14 @@ function updateTitleBar(uiDisplay, state) {
     const addIcon = isBoxSelected ?  "./svgs/icons8-plus-box.svg" : "./svgs/icons8-plus.svg";
     const addButton = itemButton(addIcon, 48, (event) => {
         if (isBoxSelected) {
-            const shapeIds = state.activeState.boxSelectedShapes;  //getShapesInBox(state, state.activeState.boxSelectionBox);
+            const shapeIds = state.activeExpression.boxSelectedShapes;  //getShapesInBox(state, state.activeExpression.boxSelectionBox);
             createViewportFromShapes(state, shapeIds);
         }
         else {
             addNewViewport(state, false);
         }
     }, () => {
-        if (state.activeState.selectedQuery === null || state.activeState.selectedQuery.type === "query") {
+        if (state.activeExpression.selectedQuery === null || state.activeExpression.selectedQuery.type === "query") {
             uiDisplay.titleOverwrite.style.visibility = "visible";
             uiDisplay.titleInput.style.visibility = "hidden";
         }
@@ -207,17 +222,17 @@ function updateTitleBar(uiDisplay, state) {
 
     uiDisplay.titleAddButton.appendChild(addButton);
 
-    const arrowButton = state.activeState.isViewportSelectionVisible ? "./svgs/icons8-up-100.png" : "./svgs/icons8-down-button-100.png";
+    const arrowButton = state.activeExpression.isViewportSelectionVisible ? "./svgs/icons8-up-100.png" : "./svgs/icons8-down-button-100.png";
     const toggleButton = itemButton(arrowButton, 48, () => {
-        state.activeState.isViewportSelectionVisible = !state.activeState.isViewportSelectionVisible;
+        state.activeExpression.isViewportSelectionVisible = !state.activeExpression.isViewportSelectionVisible;
         updateAll(state);
-    }, null, null, state.activeState.viewportStates.size > 1);
+    }, null, null, state.activeExpression.viewportStates.size > 1);
 
     uiDisplay.titleToggle.appendChild(toggleButton);
 
-    toggleTabList(uiDisplay.titleList, state.activeState.isViewportSelectionVisible);
-    if (state.activeState.isViewportSelectionVisible) {
-        for (const view of state.activeState.viewportStates.values()) {
+    toggleTabList(uiDisplay.titleList, state.activeExpression.isViewportSelectionVisible);
+    if (state.activeExpression.isViewportSelectionVisible) {
+        for (const view of state.activeExpression.viewportStates.values()) {
             addTitleRow(uiDisplay, state, view);
         }
     }
@@ -240,41 +255,44 @@ function addTitleRow(uiDisplay, state, view) {
         event.stopPropagation();
         const isConfirmed = confirm("Are you sure you want to remove this variable and viewport?");
         if (isConfirmed) {
-            removeViewport(state, view.getId());
+            removeViewport(state, view.id);
         }
     }, null, null, view.id !== 0));
     
 
-    listItem.insertAdjacentHTML('beforeend', getQueryCircle(state, -view.getId(), 32));
+    listItem.insertAdjacentHTML('beforeend', getQueryCircle(state, -view.id, 32));
 
     const name = document.createElement('div');
-    name.innerHTML = view.getName();
+    name.innerHTML = view.name;
     listItem.appendChild(name);
     uiDisplay.titleList.appendChild(listItem);
     listItem.onclick = function () {
-        switchViewport(state, view.getId());
-        state.activeState.isViewportSelectionVisible = false;
+        switchViewport(state, view.id);
+        state.activeExpression.isViewportSelectionVisible = false;
         updateAll(state);
     };
 
 }
 
 export function updateQueryDisplay(uiDisplay, state) {
-    toggleTabList(uiDisplay.queryList, state.activeState.areQueriesVisible);
     uiDisplay.queryList.innerHTML = '';
 
-    if (!state.activeState.areQueriesVisible) 
+    if (!state.hasExp() || !state.activeExpression.areQueriesVisible) {
+        toggleTabList(uiDisplay.queryList, false);
         return;
+    }
+
+    toggleTabList(uiDisplay.queryList, state.activeExpression.areQueriesVisible);
     
-    const selectedQuery = state.activeState.selectedQuery;
-    state.activeState.selectedQuery = selectedQuery;
-    for (const query of state.activeState.queries.values()) {
-        if(-query.id !== state.activeState.activeView.id && getShapesFromQuery(state, query.id).size !== 0)
+    const selectedQuery = state.activeExpression.selectedQuery;
+    state.activeExpression.selectedQuery = selectedQuery;
+    for (const query of state.activeExpression.queries.values()) {
+        if(-query.id !== state.activeExpression.activeView.id && getShapesFromQuery(state, query.id).size !== 0)
             addQueryRow(uiDisplay, state, query);
     }
 
-    for (const query of state.activeState.queries.values()) {
-        if(query.id !== 0 && -query.id !== state.activeState.activeView.id &&getShapesFromQuery(state, query.id).size === 0)
+    for (const query of state.activeExpression.queries.values()) {
+        if(query.id !== 0 && -query.id !== state.activeExpression.activeView.id &&getShapesFromQuery(state, query.id).size === 0)
             addQueryRow(uiDisplay, state, query);
     }    
 }
@@ -307,10 +325,10 @@ export function addQueryRow(uiDisplay, state, query) {
         if (isDisabled)
             return;
         const hoveredShapes = getShapesFromQuery(state, query.id);
-        if (state.activeState.hoveringType !== hoverType.viewport &&
-            state.activeState.hoveredQueries.size === 1 &&
-            state.activeState.hoveredQueries.has(query.id) &&
-            areSetsEqual(hoveredShapes, state.activeState.hoveredShapes))
+        if (state.activeExpression.hoveringType !== hoverType.viewport &&
+            state.activeExpression.hoveredQueries.size === 1 &&
+            state.activeExpression.hoveredQueries.has(query.id) &&
+            areSetsEqual(hoveredShapes, state.activeExpression.hoveredShapes))
             return;
 
         setHoverFromShapes(state, hoveredShapes, hoverType.queryList);
@@ -319,7 +337,7 @@ export function addQueryRow(uiDisplay, state, query) {
 
 
     // Shape rows
-    if (state.activeState.visibleQueryShapeRows.has(query.id)) {
+    if (state.activeExpression.visibleQueryShapeRows.has(query.id)) {
         const rows = listItem.querySelector('.shape-rows');
         const shapes = getShapesFromQuery(state, query.id);
         for (const shape of shapes) 
@@ -329,7 +347,7 @@ export function addQueryRow(uiDisplay, state, query) {
     uiDisplay.queryList.appendChild(listItem);
 
     
-    if (state.activeState.selectedQuery !== null && state.activeState.selectedQuery.type === "query" && state.activeState.selectedQuery.id === query.id) {
+    if (state.activeExpression.selectedQuery !== null && state.activeExpression.selectedQuery.type === "query" && state.activeExpression.selectedQuery.id === query.id) {
         setElementInteraction(queryRow, interactionType.Selected);
         inputField.select();
         console.log("sssss");
@@ -337,20 +355,20 @@ export function addQueryRow(uiDisplay, state, query) {
     else if (isDisabled) {
         setElementInteraction(queryRow, interactionType.Disabled)
     }
-    else if (state.activeState.hoveredQueries.has(query.id)) {
+    else if (state.activeExpression.hoveredQueries.has(query.id)) {
         setElementInteraction(queryRow, interactionType.Highlighted)
     }
 }
 
 function createQueryEditButtons(state, query, row) {
-    const arrowButton = state.activeState.visibleQueryShapeRows.has(query.id) ? "./svgs/icons8-up-100.png" : "./svgs/icons8-down-button-100.png";
+    const arrowButton = state.activeExpression.visibleQueryShapeRows.has(query.id) ? "./svgs/icons8-up-100.png" : "./svgs/icons8-down-button-100.png";
 
     row.appendChild(itemButton(arrowButton, 32, () => {
-        if (state.activeState.visibleQueryShapeRows.has(query.id)) {
-            state.activeState.visibleQueryShapeRows.delete(query.id);
+        if (state.activeExpression.visibleQueryShapeRows.has(query.id)) {
+            state.activeExpression.visibleQueryShapeRows.delete(query.id);
         }
         else {
-            state.activeState.visibleQueryShapeRows.add(query.id);
+            state.activeExpression.visibleQueryShapeRows.add(query.id);
         }
         updateAll(state);
     }, null, null, getShapesFromQuery(state, query.id).size !== 0));
@@ -395,7 +413,7 @@ function createQueryInputField(state, query, row) {
                 query.content = val;
             }
         }
-        state.activeState.selectedQuery = null;
+        state.activeExpression.selectedQuery = null;
         updateAll(state);
     });
 
@@ -416,7 +434,7 @@ function createQueryInputField(state, query, row) {
 
 function addShapeRow(uiDisplay, queryRow, state, shape) {
     const listItem = document.createElement('div');
-    const shapInst = state.activeState.activeView.shapes.get(shape);
+    const shapInst = state.activeExpression.activeView.shapes.get(shape);
 
     listItem.classList.add('queryRow');
     listItem.style.alignItems = 'center';
@@ -448,17 +466,17 @@ function addShapeRow(uiDisplay, queryRow, state, shape) {
     }
 
     listItem.addEventListener('mouseenter', () => {
-        if (state.activeState.hoveringType !== hoverType.viewport &&
-            state.activeState.hoveredShapes.size === 1 &&
-            state.activeState.hoveredQueries.size === 1 &&
-            state.activeState.hoveredShapes.has(shape))
+        if (state.activeExpression.hoveringType !== hoverType.viewport &&
+            state.activeExpression.hoveredShapes.size === 1 &&
+            state.activeExpression.hoveredQueries.size === 1 &&
+            state.activeExpression.hoveredShapes.has(shape))
             return;
 
         setHoverFromShapes(state, new Set([shape]), hoverType.queryList);
         updateAll(state);
     });
 
-    if (state.activeState.hoveredShapes.has(shape)) {
+    if (state.activeExpression.hoveredShapes.has(shape)) {
         setElementInteraction(listItem, interactionType.Highlighted)
     }
 
@@ -498,7 +516,7 @@ function addShapeRow(uiDisplay, queryRow, state, shape) {
 }
 
 export function getQueryCircle(state, queryId, size=48) {
-    const query = state.activeState.queries.get(queryId);
+    const query = state.activeExpression.queries.get(queryId);
     const isVariable = queryId <= 0;
     const queryText = isVariable ? numberToLetter(-queryId) : queryId;
     const transform = isVariable ? "transform: rotate(45deg) scale(.75);" : "";
@@ -539,4 +557,8 @@ export function toggleTabList(list, visible) {
         list.style.paddingBottom = '28px';
         list.style.visibility = 'visible';
     }
+}
+
+export function toggleVisiblity(element, isVisible) {
+    element.style.visibility = isVisible ? 'visible' : 'hidden';
 }

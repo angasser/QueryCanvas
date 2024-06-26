@@ -1,6 +1,6 @@
 import { getActivesAndInactives, getQueryType, textQueryType } from "./resultTab.js";
-import { addNewCodeViewport, setHoverFromFragments, updateAll } from "./stateManager.js";
-import { hoverType, toolType } from "./structs.js";
+import { addNewCodeViewport, setHoverFromFragments, switchExpression, updateAll } from "./stateManager.js";
+import { hoverType, modifyMode, toolType } from "./structs.js";
 import { toggleTabList } from "./uiDisplay.js";
 import { areSetsEqual, getFragmentsFromShapes, isSubset, toInt, toShapes } from "./util.js";
 import { getAllOverlapping } from "./viewport.js";
@@ -47,16 +47,6 @@ export function initialzeCodeInput(state, codeDisplay) {
             console.log('Editor is focused');
         });
 
-        // Listener for cursor position changes
-        codeDisplay.editor.onDidChangeCursorPosition((e) => {
-            const selection = codeDisplay.editor.getSelection();
-
-            const startPosition = { lineNumber: selection.startLineNumber, column: selection.startColumn };
-            const endPosition = { lineNumber: selection.endLineNumber, column: selection.endColumn };
-            updateCaret(state, codeDisplay, startPosition, endPosition);
-
-
-        });
 
         // Listener for text changes in the editor
         codeDisplay.editor.onDidChangeModelContent((e) => {
@@ -67,65 +57,64 @@ export function initialzeCodeInput(state, codeDisplay) {
 }
 
 export function updateCodeTab(state, codeDisplay) {
-    if (!codeDisplay.editor) {
-        return;
-    }
-
     if (state.selectedToolTab !== toolType.code) {
         toggleTabList(codeDisplay.codeTab, false);
         return;
     }
 
-
     toggleTabList(codeDisplay.codeTab, true);
-    return;
 
-    const cursor = codeDisplay.editor.getCursor();
-    const content = codeDisplay.editor.getValue();
-    const expLength = state.activeTask.activeView.code.length;
-    const cursorIndex = posToIndex(content, cursor);
-    const possibleStartIndex = Math.max(0, cursorIndex - expLength - 1);
-
-    console.log(cursorIndex, content, content.substring(possibleStartIndex, cursorIndex + expLength),state.activeTask.activeView.code,
-        content.substring(possibleStartIndex, cursorIndex + expLength).indexOf(state.activeTask.activeView.code));
-    let pos = content.substring(possibleStartIndex, cursorIndex + expLength + 2).indexOf(state.activeTask.activeView.code);
-    if (state.activeTask.activeView.code === "") {
-        pos = cursorIndex;
-    }
-    else if (pos === -1) {
-        
+    if (!codeDisplay.editor) {
         return;
     }
-    else pos += possibleStartIndex;
-
-    const pre = content.substring(0, pos);
-    const post = content.substring(pos + state.currentCodeLength);
-    const indent = getIndentation(pre);
-    const strs = convertVennToString(state);
-    let mid = "";
-    let hilightMap = new Map();
-    for (let i = 0; i < strs.length; i++) {
-        mid = writeMid(state, strs, i, indent, mid, hilightMap);
+    
+    codeDisplay.editor.updateOptions({ readOnly: state.modifyMode === modifyMode.QueryOnly });
+    
+    const position = codeDisplay.editor.getPosition();
+    if (codeDisplay.onCaret) {
+        codeDisplay.onCaret.dispose();
+        codeDisplay.onCaret = null;
     }
 
-    if (mid.includes("\n")){
-        mid = "(" + mid + ")";
-        const t = hilightMap;
-        hilightMap = new Map();
-        for (const [key, value] of t.entries()) {
-            hilightMap.set(key + 1, value);
+    let content = state.activeTask.codeString;
+    if (state.modifyMode !== modifyMode.CodeOnly && state.hasExp()) {
+        const sp = splitCode(content, state.activeExpression);
+        const midOj = convertVennToString(state);
+        const mid = midOj.content;
+
+        state.activeExpression.codeQueryOverride = mid;
+        
+        content = sp.pre + mid + post;
+        codeDisplay.editor.setValue(content);
+
+        setHighlight(state, codeDisplay, content, pre, midOj);
+    }
+    else
+        codeDisplay.editor.setValue(content);
+    codeDisplay.editor.setPosition(position);
+
+    codeDisplay.onCaret = codeDisplay.editor.onDidChangeCursorPosition((e) => {
+        updateCaret(state, codeDisplay, e.position);
+    });
+}
+
+function setHighlight(state, codeDisplay, content, pre, midOj) {
+    const mid = midOj.content;
+    const hilightMap = midOj.hilightMap;
+
+    const decorationOptions = {
+        options: {
+            inlineClassName: 'codeHovered', 
         }
-    }
+    };
 
-    state.currentCodeLength = mid.length;
-    codeDisplay.editor.setValue(pre + mid + post);
-
-    state.codeHighlight = [];
+    codeDisplay.codeHighlight = [];
     const newLineStart = (pre.match(/\n/g) || []).length;
     let newlineCount = newLineStart;
     let midIndex = 0;
     const charCountStart = charsSinceLastBreak(pre);
     let charCount = charCountStart;
+    const pos = pre.length;
 
     let highlighted = false;
     for (const [key, value] of hilightMap.entries()) {
@@ -140,52 +129,88 @@ export function updateCodeTab(state, codeDisplay) {
 
         if (value.isHovered) {
             highlighted = true;
-            codeDisplay.editor.markText({line: newlineCount, ch: charCount}, {line: newlineCount, ch: charCount + value.content.length}, {className: "codeHovered"});
+            decorationOptions.range = new monaco.Range(
+                newlineCount + 1,
+                charCount + 1,
+                newlineCount + 1,
+                charCount + value.content.length + 1);
         }
 
-        state.codeHighlight.push({
+        codeDisplay.codeHighlight.push({
             startPos: { line: newlineCount, ch: charCount },
             endPos: { line: newlineCount, ch: charCount + value.content.length },
             fragments: value.fragments,
         })
     }
 
-    state.codeViewportHighlight = { start: { line: newLineStart, ch: charCountStart }, end: { line: newlineCount, ch: charsSinceLastBreak(pre + mid) } };
     if (!highlighted) {
-        codeDisplay.editor.markText(state.codeViewportHighlight.start, state.codeViewportHighlight.end, {className: "codeViewHovered"});
+        decorationOptions.range = new monaco.Range(
+            newLineStart + 1,
+            charCountStart + 1,
+            newlineCount + 1,
+            charsSinceLastBreak(pre + mid) + 1);
     }
 
-    state.activeTask.activeView.code = mid;
-    codeDisplay.editor.setCursor(clampToSelection(cursor, state.codeViewportHighlight));
+    codeDisplay.editor.deltaDecorations([], [decorationOptions]);
+
 }
+
+export function convertExpToString(exp) {
+    
+}
+
 export function convertVennToString(state) {
-    const viewport = state.activeTask.activeView.queries;
-    const expStrs = [];
+    const viewport = state.activeExpression.activeView;
+    const strs = [];
     for (const frag of viewport.fragments.keys()) {
-        createExpressionString(state, expStrs, frag);
+        createExpressionString(state, strs, frag);
     }
 
-    return expStrs;
+    let mid = "";
+    let hilightMap = new Map();
+    for (let i = 0; i < strs.length; i++) {
+        mid = writeMid(state, strs, i, 0, mid, hilightMap);
+    }
+
+    if (mid.includes("\n")){
+        mid = "(" + mid + ")";
+        const t = hilightMap;
+        hilightMap = new Map();
+        for (const [key, value] of t.entries()) {
+            hilightMap.set(key + 1, value);
+        }
+    }
+
+    return {
+        var: ,
+        content: mid,
+        hilightMap: hilightMap
+    };
 }
 
-function updateCaret(state, codeDisplay, startPosition, endPosition) {
+function updateCaret(state, codeDisplay, startPosition) {
+    const intPos = posToIndex(state.activeTask.codeString, startPosition);
+    const exp = getBooleanExpression(state, intPos);
 
-
-
-    if (codeDisplay.selectedExpression !== null &&
-        (!isInSelection(startPosition, codeDisplay.selectedExpression) ||
-        !isInSelection(endPosition, codeDisplay.selectedExpression))) {
-        
-        codeDisplay.selectedExpression = null;
-        // Update code
-    }
-
-    if (codeDisplay.selectedExpression === null)
+    if (state.activeExpression === exp)
         return;
 
-    const intPos = posToIndex(codeDisplay.originalText, position);
-    const exp = getBooleanExpression(codeDisplay, intPos);
-    
+    if (state.hasExp() && state.codeQueryOverride !== null) {
+        const sp = splitCode(state.activeTask.codeString, state.activeExpression);
+        
+    }
+    switchExpression(state, exp);
+}
+
+function splitCode(code, exp) {
+    return {
+        pre: code.substring(0, exp.varLoc.min),
+        var: code.substring(exp.varLoc.min, exp.varLoc.max),
+        mid: code.substring(exp.varLoc.max, exp.loc.min),
+        query: code.substring(exp.loc.min, exp.loc.max),
+        post: code.substring(exp.loc.max),
+    }
+
 }
 
 function isInSelection(pos, bounds) {
@@ -200,10 +225,14 @@ function isInSelection(pos, bounds) {
     return true;
 }
 
-function getBooleanExpression(codeDisplay, selectedIndex) {
-    const content = codeDisplay.originalText;
+function getBooleanExpression(state, selectedIndex) {
+    for(const exp of state.activeTask.expressions.values()) {
+        if (selectedIndex >= exp.loc.min && selectedIndex <= exp.loc.max) {
+            return exp;
+        }
+    }
 
-    
+    return null;
 }
 
 
@@ -264,7 +293,7 @@ function allFalseString(state, l, expStrs)
         content: str,
         substr: [],
         addParentecies: true,
-        isHovered: state.activeTask.hoveredShapes.size > 0 && isSubset(state.activeTask.hoveredShapes, new Set(l)),
+        isHovered: state.activeExpression.hoveredShapes.size > 0 && isSubset(state.activeExpression.hoveredShapes, new Set(l)),
         fragments: () => {
             return getFragmentsFromShapes(state, l);
         }
@@ -274,7 +303,7 @@ function allFalseString(state, l, expStrs)
 
 function query1String(state, frag, c1, expStrs) {
     let str = "";
-    if (state.activeTask.activeView.allInactiveFragments.has(frag))
+    if (state.activeExpression.activeView.allInactiveFragments.has(frag))
         str += "not ";
 
     str += queryString(state, c1);
@@ -283,7 +312,7 @@ function query1String(state, frag, c1, expStrs) {
         content: str,
         substr: [],
         addParentecies: false,
-        isHovered: state.activeTask.hoveredShapes.has(c1),
+        isHovered: state.activeExpression.hoveredShapes.has(c1),
         fragments: () => {
             return new Set([toInt([c1])]);
         }
@@ -292,7 +321,7 @@ function query1String(state, frag, c1, expStrs) {
 }
 
 function allTrueExceptString(state, overlapping, expStrs) {
-    const t = getActivesAndInactives(state.activeTask.activeView.queries, overlapping);
+    const t = getActivesAndInactives(state.activeExpression.activeView, overlapping);
     const active = t.active;
     const inactive = t.inactive;
     
@@ -310,7 +339,7 @@ function allTrueExceptString(state, overlapping, expStrs) {
         content: str,
         substr: [],
         addParentecies: true,
-        isHovered: active.some((x) => state.activeTask.activeView.hoveredFragments.has(x)) && !inactive.some((x) => state.activeTask.activeView.hoveredFragments.has(x)),
+        isHovered: active.some((x) => state.activeExpression.hoveredFragments.has(x)) && !inactive.some((x) => state.activeExpression.hoveredFragments.has(x)),
         fragments: () => {
             return new Set(active);
         }
@@ -335,7 +364,7 @@ function allTrueExceptString(state, overlapping, expStrs) {
             content: substr,
             addParentecies: true,
             substr: [],
-            isHovered: state.activeTask.activeView.hoveredFragments.has(ind),
+            isHovered: state.activeExpression.hoveredFragments.has(ind),
             fragments: () => {
                 return new Set([ind]);
             }
@@ -361,7 +390,7 @@ function allTrueString(state, l, expStrs)
         content: str,
         substr: [],
         addParentecies: false,
-        isHovered: state.activeTask.hoveredShapes.size > 0 && isSubset(state.activeTask.hoveredShapes, new Set(l)),
+        isHovered: state.activeExpression.hoveredShapes.size > 0 && isSubset(state.activeExpression.hoveredShapes, new Set(l)),
         fragments: () => {
             return getFragmentsFromShapes(state, l);
         }
@@ -376,9 +405,9 @@ function quer2String(state, c1, c2, expStrs)
     const i1 = toInt([c1]);
     const i2 = toInt([c2]);
     const i12 = toInt([c1, c2]);
-    const c1Active = !state.activeTask.activeView.allInactiveFragments.has(i1);
-    const c2Active = !state.activeTask.activeView.allInactiveFragments.has(i2);
-    const bothActive = !state.activeTask.activeView.allInactiveFragments.has(i12);
+    const c1Active = !state.activeExpression.activeView.allInactiveFragments.has(i1);
+    const c2Active = !state.activeExpression.activeView.allInactiveFragments.has(i2);
+    const bothActive = !state.activeExpression.activeView.allInactiveFragments.has(i12);
 
     if (c1Active && c2Active && bothActive) {
         str += queryString(state, c1);
@@ -419,7 +448,7 @@ function quer2String(state, c1, c2, expStrs)
         content: str,
         substr: [],
         addParentecies: true,
-        isHovered: state.activeTask.hoveredShapes.size > 0 && isSubset(state.activeTask.hoveredShapes, new Set([c1, c2])),
+        isHovered: state.activeExpression.hoveredShapes.size > 0 && isSubset(state.activeExpression.hoveredShapes, new Set([c1, c2])),
         fragments: () => {
             return new Set([i1, i2, i12]);
         }
@@ -441,14 +470,14 @@ function normalString(state, l, overlapping, expStrs)
     }
 
     const i = toInt(l);
-    if (state.activeTask.activeView.allInactiveFragments.has(i))
+    if (state.activeExpression.activeView.allInactiveFragments.has(i))
         throw new Error("Fragment is inactive");
 
     const ob = {
         content: str,
         substr: [],
         addParentecies: true,
-        isHovered: state.activeTask.activeView.hoveredFragments.has(i),
+        isHovered: state.activeExpression.hoveredFragments.has(i),
         fragments: () => {
             return new Set([i]);
         }
@@ -500,8 +529,8 @@ function writeMid(state, strs, i, indent, mid, hilightMap) {
 function posToIndex(code, pos) {
     let line = 0;
     for (let i = 0; i < code.length; i++) {
-        if (line === pos.line) {
-            return i + pos.ch;
+        if (line === pos.lineNumber - 1) {
+            return i + pos.column - 1;
         }
         if (code[i] === '\n') {
             line++;
@@ -580,8 +609,8 @@ function splitIntoLines(code) {
 }
 
 function queryString(state, shapeId) {
-    const queryId = state.activeTask.activeView.shapes.get(shapeId).queryId;
-    const query = state.activeTask.queries.get(queryId);
+    const queryId = state.activeExpression.activeView.shapes.get(shapeId).queryId;
+    const query = state.activeExpression.queries.get(queryId);
     let modifiedContent = query.content.replace(/ /g, "_");
     modifiedContent = modifiedContent.replace(/[^a-zA-Z0-9_]/g, "");
     return modifiedContent;

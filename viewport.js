@@ -35,8 +35,14 @@ export function updateViewport(canvas, state) {
     }
 
     const c = canvas.mainContext;
-    const activeView = state.activeState.activeView;
     c.clearRect(0, 0, canvas.mainCanvas.width, canvas.mainCanvas.height);
+
+    if (state.activeExpression === null) {
+        state.uiDisplay.queryTagRef.innerHTML = '';
+        return;
+    }
+
+    const activeView = state.activeExpression.activeView;
     activeView.fragments.clear();
 
     const iter = new fragmentIterator(activeView.shapes);
@@ -51,7 +57,7 @@ export function updateViewport(canvas, state) {
         
         if (fragShapes.length === 1) {
             const shape = activeView.shapes.get(fragShapes[0]);
-            const query = state.activeState.queries.get(shape.queryId);
+            const query = state.activeExpression.queries.get(shape.queryId);
             points = getShapePoints(shape);
             color = hexToRgb(query.color);
         }
@@ -71,8 +77,8 @@ export function updateViewport(canvas, state) {
             points.some(p => p.x < -1000 || p.y < -1000)) continue;
 
         const i = toInt(fragShapes);
-        const isHovered = state.activeState.hoveredFragments.has(i);
-        const isInverted = state.activeState.activeView.allInactiveFragments.has(i);
+        const isHovered = state.activeExpression.hoveredFragments.has(i);
+        const isInverted = state.activeExpression.activeView.allInactiveFragments.has(i);
 
         activeView.fragments.set(i, {
             fragmentId: i,
@@ -114,7 +120,7 @@ export function getClosestShape(point, state) {
     let closestShape = null;
     let closestDistance = Infinity;
 
-    for (const shape of state.activeState.activeView.shapes.values()) {
+    for (const shape of state.activeExpression.activeView.shapes.values()) {
         const dx = point.x - shape.center.x;
         const dy = point.y - shape.center.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -130,7 +136,7 @@ export function getClosestShape(point, state) {
 
 export function getShapesUnderPoint(point, state) {
     const shapes = new Set();
-    for (const shape of state.activeState.activeView.shapes.values()) {
+    for (const shape of state.activeExpression.activeView.shapes.values()) {
         if (isPointInShape(point, shape)) {
             shapes.add(shape.shapeId);
         }
@@ -167,7 +173,7 @@ export function getAllOverlapping(state, shapeIds)
     let result = null;
 
     const i = toInt(shapeIds);
-    for (const f of state.activeState.activeView.fragments.keys()) {
+    for (const f of state.activeExpression.activeView.fragments.keys()) {
         if ((f & i) !== i)
             continue;
 

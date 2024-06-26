@@ -1,5 +1,11 @@
-import { addNewViewport, createNewQuery } from "./stateManager.js";
+import { addNewViewport, createNewQuery, defaultExpressionState } from "./stateManager.js";
 import { toInt } from "./util.js";
+
+export const modifyMode = Object.freeze({
+    All: 0,
+    CodeOnly: 1,
+    QueryOnly: 2,
+});
 
 export const shapeType = Object.freeze({
     Circle: 0,
@@ -38,23 +44,48 @@ export const interactionType = Object.freeze({
 });
 
 export class GameState{
-    constructor(viewport, uiDisplay) {
+    constructor(viewport, uiDisplay, codeDisplay) {
         this.viewport = viewport;
         this.uiDisplay = uiDisplay;
+        this.codeDisplay = codeDisplay;
 
-        this.activeState = new TaskState();        
-        this.states = new Map([[0, this.activeState]]);
-        createNewQuery(this, 0, false);
+        this.modifyMode = modifyMode.QueryOnly;
+
+        const stateId = 0;
+        this.activeExpression = defaultExpressionState(this);        
+        this.activeTask = new TaskState("Sandbox", "", new Map([[stateId, this.activeExpression]]));
+        this.activeTask.activeExpression = this.activeExpression;
+        this.tasks = new Map([["Sandbox", this.activeTask]]);
 
         this.selectedToolTab = toolType.result;
     }
+
+    hasExp() {
+        return this.activeExpression !== null;
+    }
 }
 
-export class TaskState{
-    constructor() {
-        this.queries = new Map();
-        this.activeView = new ViewportState(0, "Main View");
-        this.viewportStates = new Map([[0, this.activeView]]);
+export class TaskState {
+    constructor(title, codeString, expressions) {
+        this.title = title;
+        this.codeString = codeString;
+        this.expressions = expressions;
+        this.activeExpression = null;
+    }
+}
+
+export class TaskExpressionState{
+    constructor(id, loc, varLoc, queries, viewportStates) {
+        this.id = id;
+        this.loc = loc;
+        this.varLoc = varLoc;
+
+        this.codeVariableOverride = null;
+        this.codeQueryOverride = null;
+
+        this.queries = queries;
+        this.activeView = viewportStates.has(0) ? viewportStates.get(0) : null;
+        this.viewportStates = viewportStates;
 
         this.hoveringType = hoverType.viewport;
         this.hoveredQueries = new Set();
@@ -74,24 +105,24 @@ export class TaskState{
     }
 }
 
+export class ExpressionLocation{
+    constructor(expId, min, max) {
+        this.expId = expId;
+        this.min = min;
+        this.max = max;
+    }
+}
+
 export class ViewportState{
     constructor(id, name) {
         this.id = id;
         this.name = name;
-        this.code = "";
         this.shapes = new Map();
         this.fragments = new Map();
 
         this.allInactiveFragments = new Set();
     }
 
-    getName() {
-        return this.name;
-    }
-
-    getId() {
-        return this.id;
-    }
 }
 
 export class VennQuery{

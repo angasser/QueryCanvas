@@ -1,10 +1,14 @@
-import { ViewportState, hoverType, shapeType, toolType } from './structs.js';
-import { getColor, getFragmentsFromShapes, getQueriesFromShapes, getShapesFromFragments, getShapesFromQuery, numberToLetter, toInt, toShapes } from './util.js';
+import { ExpressionLocation, TaskExpressionState, TaskState, ViewportState, hoverType, shapeType, toolType } from './structs.js';
+import { deserializeTaskExpression, getAllOccurrences, getColor, getFragmentsFromShapes, getQueriesFromShapes, getRandomId, getShapesFromFragments, getShapesFromQuery, numberToLetter, serializeTaskExpression, toInt, toShapes } from './util.js';
 import { updateUi } from './uiDisplay.js';
 import { updateViewport, findEmpySpace } from './viewport.js';
+import { convertVennToString } from './codeDisplay.js';
 
 export function updateAll(state, uiDelayable = false) {
-    console.log("updateAll");
+    // console.log(convertVennToString(state).content);
+    // console.log(serializeTaskExpression(state.activeExpression));
+    // console.log(state.activeExpression);
+    console.log(state.activeExpression);
     updateViewport(state.viewport, state);
 
     if (uiDelayable) {
@@ -15,38 +19,38 @@ export function updateAll(state, uiDelayable = false) {
     }
 }
 
-export function createNewQuery(state, idOverride = null, addShape = true) {
-    state.activeState.areQueriesVisible = true;
+export function createNewQuery(state, expression, idOverride = null, addShape = true) {
+    expression.areQueriesVisible = true;
 
     let queryId = idOverride;
     if (idOverride === null) {
         queryId = 0;
         do queryId++;
-        while (state.activeState.queries.has(queryId));
+        while (expression.queries.has(queryId));
     }
 
     let count = 0;
     let queryColor;
     do queryColor = getColor(count++);
-    while (state.activeState.queries.values().some(q => q.color === queryColor));
+    while (expression.queries.values().some(q => q.color === queryColor));
 
     count = 0;
     let queryContent;
     if (queryId <= 0) {
-        queryContent = state.activeState.viewportStates.get(-queryId).name;
+        queryContent = expression.viewportStates.get(-queryId).name;
     }
     else {
         queryContent = `Query ${queryId}`;
-        while (state.activeState.queries.values().some(q => q.content === queryContent))
+        while (expression.queries.values().some(q => q.content === queryContent))
             queryContent = `Query ${queryId++}`;
     }
 
-    state.activeState.queries.set(queryId, {
+    expression.queries.set(queryId, {
         id: queryId,
         content: queryContent,
         color: queryColor
     });
-    state.activeState.selectedQuery = { id: queryId, type: "query" };
+    expression.selectedQuery = { id: queryId, type: "query" };
 
     if (addShape) {
         createNewShape(state, queryId);
@@ -54,10 +58,10 @@ export function createNewQuery(state, idOverride = null, addShape = true) {
 }
 
 export function removeQuery(state, queryId) {
-    state.activeState.queries.delete(queryId);
-    state.activeState.visibleQueryShapeRows.delete(queryId);
+    state.activeExpression.queries.delete(queryId);
+    state.activeExpression.visibleQueryShapeRows.delete(queryId);
 
-    for (const view of state.activeState.viewportStates.values()) {
+    for (const view of state.activeExpression.viewportStates.values()) {
         for (const shape of view.shapes.values()) {
             if (shape.queryId === queryId) {
                 view.shapes.delete(shape.shapeId);
@@ -74,11 +78,11 @@ export function createNewShape(state, queryId, positionOverride = null) {
 
     let shapeId = -1;
     do shapeId++;
-    while (state.activeState.activeView.shapes.has(shapeId));
+    while (state.activeExpression.activeView.shapes.has(shapeId));
 
     const radius = 150;
     const point = positionOverride === null ? findEmpySpace(state, radius) : positionOverride;
-    state.activeState.activeView.shapes.set(shapeId, {
+    state.activeExpression.activeView.shapes.set(shapeId, {
         shapeId: shapeId,
         queryId: queryId,
         shapeType: queryId <= 0 ? shapeType.Rhombus : shapeType.Circle,
@@ -86,14 +90,14 @@ export function createNewShape(state, queryId, positionOverride = null) {
         radius: radius,
         radius2: radius,
     });
-    state.activeState.visibleQueryShapeRows = new Set([queryId]);
-    state.activeState.boxSelectionBox = null;
+    state.activeExpression.visibleQueryShapeRows = new Set([queryId]);
+    state.activeExpression.boxSelectionBox = null;
 
     updateAll(state);
 }
 
 export function removeShape(state, shapeId, update = true) {
-    state.activeState.activeView.shapes.delete(shapeId);
+    state.activeExpression.activeView.shapes.delete(shapeId);
 
     if (update) {
         resetState(state);
@@ -104,33 +108,33 @@ export function removeShape(state, shapeId, update = true) {
 
 export function isInactiveFragment(state, shapes) {
     const i = toInt(shapes);
-    return state.activeState.activeView.allInactiveFragments.has(i);
+    return state.activeExpression.activeView.allInactiveFragments.has(i);
 }
 
 export function toggleInactiveFragment(state, shapes) {
     const i = toInt(shapes);
     if (isInactiveFragment(state, shapes)) {
-        state.activeState.activeView.allInactiveFragments.delete(i);
+        state.activeExpression.activeView.allInactiveFragments.delete(i);
     } else {
-        state.activeState.activeView.allInactiveFragments.add(i);
+        state.activeExpression.activeView.allInactiveFragments.add(i);
     }
     updateAll(state);
 }
 
 export function resetState(state) {
-    state.activeState.hoveredQueries = new Set();
-    state.activeState.hoveredShapes = new Set();
-    state.activeState.hoveredFragments = new Set();
-    state.activeState.hoveringType = hoverType.viewport;
-    state.activeState.selectedShapes = new Set();
-    state.activeState.boxSelectionBox = null;
-    state.activeState.isBoxSelecting = false;
+    state.activeExpression.hoveredQueries = new Set();
+    state.activeExpression.hoveredShapes = new Set();
+    state.activeExpression.hoveredFragments = new Set();
+    state.activeExpression.hoveringType = hoverType.viewport;
+    state.activeExpression.selectedShapes = new Set();
+    state.activeExpression.boxSelectionBox = null;
+    state.activeExpression.isBoxSelecting = false;
 
-    for (const view of state.activeState.viewportStates.values()) {
+    for (const view of state.activeExpression.viewportStates.values()) {
         for (const inac of view.allInactiveFragments) {
             const shapes = toShapes(inac);
             if (!shapes.every(shapeId => view.shapes.has(shapeId))) {
-                state.activeState.activeView.allInactiveFragments.delete(inac);
+                state.activeExpression.activeView.allInactiveFragments.delete(inac);
             }
         }
     }
@@ -138,21 +142,21 @@ export function resetState(state) {
 
 export function addNewViewport(state, stayInCurrentViewport = false) {
     let id = 0;
-    while (state.activeState.viewportStates.has(id))
+    while (state.activeExpression.viewportStates.has(id))
         id++;
 
     const name = `Variable ${numberToLetter(id)}`;
     const newView = new ViewportState(id, name);
 
-    state.activeState.viewportStates.set(id, newView);
-    createNewQuery(state, -id, false);
+    state.activeExpression.viewportStates.set(id, newView);
+    createNewQuery(state, state.activeExpression, -id, false);
     
     if (stayInCurrentViewport) {
-        state.activeState.selectedQuery = { id: id, type: "title-temp" };   
+        state.activeExpression.selectedQuery = { id: id, type: "title-temp" };   
     }
     else {
-        state.activeState.activeView = newView;
-        state.activeState.selectedQuery = { id: id, type: "title" };
+        state.activeExpression.activeView = newView;
+        state.activeExpression.selectedQuery = { id: id, type: "title" };
         switchViewport(state, id);
     }
     return id;
@@ -160,14 +164,14 @@ export function addNewViewport(state, stayInCurrentViewport = false) {
 
 export function addNewCodeViewport(state) {
     let id = 0;
-    while (state.activeState.viewportStates.has(id))
+    while (state.activeExpression.viewportStates.has(id))
         id++;
 
     const name = `View ${numberToLetter(id)}`;
     const newView = new ViewportState(id, name);
 
-    state.activeState.viewportStates.set(id, newView);
-    createNewQuery(state, -id, false);
+    state.activeExpression.viewportStates.set(id, newView);
+    createNewQuery(state, state.activeExpression, -id, false);
     
     switchViewport(state, id);
     return id;
@@ -178,7 +182,7 @@ export function createViewportFromShapes(state, shapeIds) {
     const shapes = new Map();
     let center = { x: 0, y: 0 };
     for (const shape of shapeIds) {
-        const shapInst = state.activeState.activeView.shapes.get(shape);
+        const shapInst = state.activeExpression.activeView.shapes.get(shape);
         center.x += shapInst.center.x;
         center.y += shapInst.center.y;
         shapes.set(shape, shapInst);
@@ -189,7 +193,7 @@ export function createViewportFromShapes(state, shapeIds) {
     center.y /= Math.max(1, shapeIds.size);
 
     const id = addNewViewport(state, true);
-    state.activeState.viewportStates.get(id).shapes = shapes;
+    state.activeExpression.viewportStates.get(id).shapes = shapes;
 
     createNewShape(state, -id, center);
 }
@@ -200,44 +204,95 @@ export function removeViewport(state, viewportId) {
         return;
     }
 
-    state.activeState.viewportStates.delete(viewportId);
+    state.activeExpression.viewportStates.delete(viewportId);
     removeQuery(state, -viewportId);
-    state.activeState.isViewportSelectionVisible = false;
+    state.activeExpression.isViewportSelectionVisible = false;
     switchViewport(state, 0);
 }
 
 export function updateViewportName(state, viewportId, name) {
-    state.activeState.viewportStates.get(viewportId).name = name;
-    state.activeState.queries.get(-viewportId).content = name;
+    state.activeExpression.viewportStates.get(viewportId).name = name;
+    state.activeExpression.queries.get(-viewportId).content = name;
     updateAll(state);
 }
 
 export function switchViewport(state, index) {
-    state.activeState.activeView = state.activeState.viewportStates.get(index);
+    state.activeExpression.activeView = state.activeExpression.viewportStates.get(index);
     resetState(state)
     updateAll(state);
 }
 
 export function setHoverFromShapes(state, shapes, hoverType) {
-    state.activeState.hoveringType = hoverType;
+    state.activeExpression.hoveringType = hoverType;
 
-    state.activeState.hoveredQueries = getQueriesFromShapes(state, shapes);
-    state.activeState.hoveredShapes = shapes;
-    state.activeState.hoveredFragments = getFragmentsFromShapes(state, shapes);
+    state.activeExpression.hoveredQueries = getQueriesFromShapes(state, shapes);
+    state.activeExpression.hoveredShapes = shapes;
+    state.activeExpression.hoveredFragments = getFragmentsFromShapes(state, shapes);
 }
 
 export function setHoverFromFragments(state, fragments, hoverType) {
-    state.activeState.hoveringType = hoverType;
+    state.activeExpression.hoveringType = hoverType;
 
-    state.activeState.hoveredFragments = fragments;
-    state.activeState.hoveredShapes = getShapesFromFragments(state, fragments);
-    state.activeState.hoveredQueries = getQueriesFromShapes(state, state.activeState.hoveredShapes);
+    state.activeExpression.hoveredFragments = fragments;
+    state.activeExpression.hoveredShapes = getShapesFromFragments(state, fragments);
+    state.activeExpression.hoveredQueries = getQueriesFromShapes(state, state.activeExpression.hoveredShapes);
 }
 
 export function setHoverFromQueris(state, queries, hoverType) {
-    state.activeState.hoveringType = hoverType;
+    state.activeExpression.hoveringType = hoverType;
 
-    state.activeState.hoveredQueries = queries;
-    state.activeState.hoveredShapes = getShapesFromQuery(state, queries);
-    state.activeState.hoveredFragments = getFragmentsFromShapes(state, state.activeState.hoveredShapes);
+    state.activeExpression.hoveredQueries = queries;
+    state.activeExpression.hoveredShapes = getShapesFromQuery(state, queries);
+    state.activeExpression.hoveredFragments = getFragmentsFromShapes(state, state.activeExpression.hoveredShapes);
 }
+
+export function defaultExpressionState(state) {
+    const exp = new TaskExpressionState(0,
+        new ExpressionLocation(0, 0, 0),
+        new ExpressionLocation(0, 0, 0),
+        new Map(),
+        new Map([[0, new ViewportState(0, "Main View")]]));
+    
+    createNewQuery(state, exp, 0, false);
+    return exp;
+}
+
+export function createTask(state, title, codeString, expressionMap) {
+    const expressions = new Map([[0, defaultExpressionState(state)]]);
+    for (const [key, value] of expressionMap) {
+        const occ = getAllOccurrences(codeString, key);
+        for (const i of occ) {
+            let id;
+            do id = getRandomId();
+            while (expressions.has(id));
+
+            const exp = deserializeTaskExpression(value);
+            const loc = new ExpressionLocation(id, i, i + key.length);
+            exp.id = id;
+            exp.loc = loc;
+            expressions.set(id, exp, exp);
+        }
+    }
+
+    return new TaskState(title, codeString, expressions);
+}
+
+export function switchTask(state, taskTitle) {
+    state.activeTask = state.tasks.get(taskTitle);
+    state.activeExpression = state.activeTask.activeExpression;
+
+    state.selectedToolTab = state.activeTask.codeString !== "" ? toolType.code : toolType.result;
+
+    updateAll(state);
+}
+
+export function switchExpression(state, expression) {
+    state.activeExpression = expression;
+
+    state.activeTask.activeExpression = expression;
+    console.log(expression, state.activeTask.activeExpression, state.activeExpression);
+
+    updateAll(state);
+}
+
+

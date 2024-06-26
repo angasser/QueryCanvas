@@ -39,9 +39,14 @@ function spawnText(s, parent, bold = false) {
 }
 
 export function updateResultTab(state, uiDisplay) {
-    const viewport = state.activeState.activeView;
     uiDisplay.resultTab.innerHTML = '';
 
+    if (!state.hasExp()) {
+        toggleTabList(uiDisplay.resultTab, false);
+        return;
+    }
+
+    const viewport = state.activeExpression.activeView;
     if (viewport.fragments.size === 0 || state.selectedToolTab !== toolType.result) {
         toggleTabList(uiDisplay.resultTab, false);
         return;
@@ -56,7 +61,7 @@ export function updateResultTab(state, uiDisplay) {
 
 
 function createResultRow(state, uiDisplay, frag) {
-    const viewport = state.activeState.activeView;
+    const viewport = state.activeExpression.activeView;
     const fragShapes = toShapes(frag);
     
     const overlapping = getAllOverlapping(state, fragShapes);
@@ -94,7 +99,7 @@ function createResultRow(state, uiDisplay, frag) {
 
 function spawnCircle(state, parent, shapeId)
 {
-    const queryId = state.activeState.activeView.shapes.get(shapeId).queryId;
+    const queryId = state.activeExpression.activeView.shapes.get(shapeId).queryId;
     parent.insertAdjacentHTML('beforeend', getQueryCircle(state, queryId, 32));
 }
 
@@ -114,26 +119,26 @@ function spawnAllFalseText(state, l, row)
     spawnText("hold", row);
 
     setRowHover(state, row,
-        state.activeState.hoveredShapes.size > 0 && isSubset(state.activeState.hoveredShapes, new Set(l)), () => {
+        state.activeExpression.hoveredShapes.size > 0 && isSubset(state.activeExpression.hoveredShapes, new Set(l)), () => {
         return getFragmentsFromShapes(state, l);
     });
 }
 
 function spawnQuery1Text(state, frag, c1, row) {
     spawnCircle(state, row, c1);
-        if (state.activeState.activeView.allInactiveFragments.has(frag))
+        if (state.activeExpression.activeView.allInactiveFragments.has(frag))
             spawnText("does not hold", row);
         else
             spawnText("holds", row);
 
     setRowHover(state, row,
-        state.activeState.hoveredShapes.has(c1), () => {
+        state.activeExpression.hoveredShapes.has(c1), () => {
         return new Set([toInt([c1])]);
     });
 }
 
 function spawnAllTrueExceptText(state, overlapping, row) {
-    const t = getActivesAndInactives(state.activeState.activeView, overlapping);
+    const t = getActivesAndInactives(state.activeExpression.activeView, overlapping);
     const active = t.active;
     const inactive = t.inactive;
 
@@ -152,7 +157,7 @@ function spawnAllTrueExceptText(state, overlapping, row) {
     spawnText("except", row, true);
 
     setRowHover(state, row,
-        active.some((x) => state.activeState.hoveredFragments.has(x)) && !inactive.some((x) => state.activeState.hoveredFragments.has(x)),
+        active.some((x) => state.activeExpression.hoveredFragments.has(x)) && !inactive.some((x) => state.activeExpression.hoveredFragments.has(x)),
         () => {
         return new Set(active);
     });
@@ -175,7 +180,7 @@ function spawnAllTrueExceptText(state, overlapping, row) {
         spawnText("holds", exceptRow);
 
         setRowHover(state, exceptRow,
-            state.activeState.hoveredFragments.has(ind), () => {
+            state.activeExpression.hoveredFragments.has(ind), () => {
             return new Set([ind]);
         });
     }
@@ -198,7 +203,7 @@ function spawnAllTrueText(state, l, row)
     spawnText("hold", row);
 
     setRowHover(state, row,
-        state.activeState.hoveredShapes.size > 0 && isSubset(state.activeState.hoveredShapes, new Set(l)), () => {
+        state.activeExpression.hoveredShapes.size > 0 && isSubset(state.activeExpression.hoveredShapes, new Set(l)), () => {
         return getFragmentsFromShapes(state, l);
     });
 }
@@ -208,9 +213,9 @@ function spawnQuery2Text(state, c1, c2, row)
     const i1 = toInt([c1]);
     const i2 = toInt([c2]);
     const i12 = toInt([c1, c2]);
-    const c1Active = !state.activeState.activeView.allInactiveFragments.has(i1);
-    const c2Active = !state.activeState.activeView.allInactiveFragments.has(i2);
-    const bothActive = !state.activeState.activeView.allInactiveFragments.has(i12);
+    const c1Active = !state.activeExpression.activeView.allInactiveFragments.has(i1);
+    const c2Active = !state.activeExpression.activeView.allInactiveFragments.has(i2);
+    const bothActive = !state.activeExpression.activeView.allInactiveFragments.has(i12);
 
     if (c1Active && c2Active && bothActive) {
         spawnCircle(state, row, c1);
@@ -253,7 +258,7 @@ function spawnQuery2Text(state, c1, c2, row)
     }
 
     setRowHover(state, row,
-        state.activeState.hoveredShapes.size > 0 && isSubset(state.activeState.hoveredShapes, new Set([c1, c2])), () => {
+        state.activeExpression.hoveredShapes.size > 0 && isSubset(state.activeExpression.hoveredShapes, new Set([c1, c2])), () => {
         
         return new Set([i1, i2, i12]);
     });
@@ -271,12 +276,12 @@ function spawnNormalText(state, l, overlapping, row)
     }
 
     const i = toInt(l);
-    if (state.activeState.activeView.allInactiveFragments.has(i))
+    if (state.activeExpression.activeView.allInactiveFragments.has(i))
         spawnText("does not hold", row);
     else
         spawnText("holds", row);
 
-    setRowHover(state, row, state.activeState.hoveredFragments.has(i), () => {
+    setRowHover(state, row, state.activeExpression.hoveredFragments.has(i), () => {
         return new Set([i]);
     });
 }
@@ -287,8 +292,8 @@ function setRowHover(state, row, isHighlighted, getHover) {
     }
     row.addEventListener('mouseenter', () => {
         const ret = getHover();
-        if (state.activeState.hoveringType === hoverType.result  &&
-            areSetsEqual(state.activeState.hoveredFragments, ret))
+        if (state.activeExpression.hoveringType === hoverType.result  &&
+            areSetsEqual(state.activeExpression.hoveredFragments, ret))
             return;
         
         setHoverFromFragments(state, ret, hoverType.result);
@@ -314,7 +319,7 @@ export function getQueryType(state, shapeIds, overlapping)
         return textQueryType.Query2;
     }
 
-    const t = getActivesAndInactives(state.activeState.activeView, overlapping);
+    const t = getActivesAndInactives(state.activeExpression.activeView, overlapping);
     const activeCount = t.active.length;
     const inactiveCount = t.inactive.length;
 
@@ -336,7 +341,7 @@ export function getQueryType(state, shapeIds, overlapping)
         return textQueryType.AllTrueExcept;
     }
 
-    if (state.activeState.activeView.allInactiveFragments.has(toInt(shapeIds)))
+    if (state.activeExpression.activeView.allInactiveFragments.has(toInt(shapeIds)))
         return textQueryType.None;
     return textQueryType.Normal;
 }

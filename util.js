@@ -117,7 +117,7 @@ export function getShapeBoundingBox(state, shapeIds, padding) {
     let maxY = -Infinity;
 
     for (const shapeId of shapeIds) {
-        const shape = state.activeState.activeView.shapes.get(shapeId);
+        const shape = state.activeExpression.activeView.shapes.get(shapeId);
         minX = Math.min(minX, shape.center.x - shape.radius);
         maxX = Math.max(maxX, shape.center.x + shape.radius);
 
@@ -137,7 +137,7 @@ export function getShapeBoundingBox(state, shapeIds, padding) {
 
 export function getShapesInBox(state, box) {
     const shapes = new Set();
-    for (const shape of state.activeState.activeView.shapes.values()) {
+    for (const shape of state.activeExpression.activeView.shapes.values()) {
         const center = shape.center;
         if(center.x >= box.minX && center.x <= box.maxX && center.y >= box.minY && center.y <= box.maxY) {
             shapes.add(shape.shapeId);
@@ -193,6 +193,19 @@ export function getRandomId() {
   return getRandomInt(0, 1000000000);
 }
 
+export function getAllOccurrences(content, searchString) {
+    let indices = [];
+    let startIndex = 0;
+    let index;
+
+    while ((index = content.indexOf(searchString, startIndex)) > -1) {
+        indices.push(index);
+        startIndex = index + searchString.length;
+    }
+
+    return indices;
+}
+
 export function getRandomInt(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -204,7 +217,7 @@ export function getFragmentsFromShapes(state, shapes) {
 
     for (const shape of shapes) {
         const i = toInt([shape]);
-        for (const frag of state.activeState.activeView.fragments.keys()) {
+        for (const frag of state.activeExpression.activeView.fragments.keys()) {
             if (isIntSubset(i, frag))
                 fragments.add(frag);
         }
@@ -231,14 +244,14 @@ export function isIntSubset(subset, parent) {
 export function getQueriesFromShapes(state, shapes) {
     const queries = new Set();
     for (const shape of shapes) {
-        queries.add(state.activeState.activeView.shapes.get(shape).queryId);
+        queries.add(state.activeExpression.activeView.shapes.get(shape).queryId);
     }
     return queries;
 }
 
 export function getShapesFromQuery(state, queryId) {
     const shapes = new Set();
-    for (const shape of state.activeState.activeView.shapes.values()) {
+    for (const shape of state.activeExpression.activeView.shapes.values()) {
         if (shape.queryId === queryId) {
             shapes.add(shape.shapeId);
         }
@@ -413,6 +426,37 @@ export function darkColor(color) {
 
 export function whitenColor(color) {
     return rgbToString(colorLerp(color, [255, 255, 255], 0.5));
+}
+
+export function serializeTaskExpression(exp) {
+    function replacer(key, value) {
+        if (key === "fragments") // Will be recalculated
+            return { _type: 'Map', entries: [] };
+        
+        if (value instanceof Set) {
+            return { _type: 'Set', values: Array.from(value) };
+        } else if (value instanceof Map) {
+            return { _type: 'Map', entries: Array.from(value.entries()) };
+        }
+        return value;
+    }
+
+    return JSON.stringify(exp, replacer);
+}
+
+export function deserializeTaskExpression(serializedExp) {
+    function reviver(key, value) {
+        if (value && value._type) {
+            if (value._type === 'Set') {
+                return new Set(value.values);
+            } else if (value._type === 'Map') {
+                return new Map(value.entries);
+            }
+        }
+        return value;
+    }
+
+    return JSON.parse(serializedExp, reviver);
 }
 
 
