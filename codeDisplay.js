@@ -182,7 +182,7 @@ export function convertVennToString(state) {
     }
 
     return {
-        var: ,
+        var: '',
         content: mid,
         hilightMap: hilightMap
     };
