@@ -390,7 +390,6 @@ export function convertVennToString(state, viewport, ind) {
     return {
         content: content,
         var: '',
-        content: mid,
         hilightMap: hilightMap
     };
 }
