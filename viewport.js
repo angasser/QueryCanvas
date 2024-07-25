@@ -43,7 +43,7 @@ export function updateViewport(canvas, state) {
     }
 
     const activeView = state.activeExpression.activeView;
-    activeView.fragments.clear();
+    activeView.fragments = new Map();
 
     const iter = new fragmentIterator(activeView.shapes);
     while (iter.hasNext()) {
@@ -95,6 +95,16 @@ export function updateViewport(canvas, state) {
     }
 
     updateQueryTags(state);
+}
+
+export function transformPoint(view, point) {
+    let transformedX = point[0] + view.trans[0];
+    let transformedY = point[1] + view.trans[1];
+
+    transformedX *= view.scale;
+    transformedY *= view.scale;
+
+    return [transformedX, transformedY];
 }
 
 export function findEmpySpace(state, radius) {
@@ -165,7 +175,7 @@ export function isPointInShape(point, shape)
     }
 }
 
-export function getAllOverlapping(state, shapeIds)
+export function getAllOverlapping(view, shapeIds)
 {
     if (shapeIds.length === 0)
         return [];
@@ -173,7 +183,7 @@ export function getAllOverlapping(state, shapeIds)
     let result = null;
 
     const i = toInt(shapeIds);
-    for (const f of state.activeExpression.activeView.fragments.keys()) {
+    for (const f of view.fragments.keys()) {
         if ((f & i) !== i)
             continue;
 

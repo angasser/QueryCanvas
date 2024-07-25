@@ -249,9 +249,9 @@ export function getQueriesFromShapes(state, shapes) {
     return queries;
 }
 
-export function getShapesFromQuery(state, queryId) {
+export function getShapesFromQuery(view, queryId) {
     const shapes = new Set();
-    for (const shape of state.activeExpression.activeView.shapes.values()) {
+    for (const shape of view.shapes.values()) {
         if (shape.queryId === queryId) {
             shapes.add(shape.shapeId);
         }
@@ -273,29 +273,25 @@ export function numberToLetter(number) {
 }
 
 
-export function itemButton(imageSrc, size, clicked, hovered, unhovered, visible = true) {
-    // Create the button element
+export function itemButton(imageSrc, size, clicked, hovered, unhovered, visible = true, tooltip = '') {
     const button = document.createElement('button');
     button.innerHTML = `<img src="${imageSrc}" alt="Button Icon">`;
     const img = button.querySelector('img');
     button.classList.add('iconButton');
 
-    // Style the button
     button.style.width = `${size}px`;
     button.style.height = `${size}px`;
-    // button.style.border = 'none';
-    // button.style.background = 'white';
-    // button.style.padding = '0';
-    // button.style.borderRadius = '50%';
-    // button.style.cursor = 'pointer';
     button.style.visibility = visible ? 'visible' : 'hidden'; 
     button.style.pointerEvents = visible ? 'auto' : 'none'; 
-    // button.style.flexShrink = '0';
 
     img.style.width = '100%';
     img.style.height = '100%';
     img.style.objectFit = 'cover'; 
     img.style.transition = 'filter 0.3s';
+
+    if (tooltip) {
+        button.setAttribute('title', tooltip);
+    }
 
     // Event listeners
     button.addEventListener('mouseenter', () => {
@@ -321,7 +317,7 @@ export function itemButton(imageSrc, size, clicked, hovered, unhovered, visible 
 }
 
 
-export function itemTextButton(imageSrc, text, size, clicked) {
+export function itemTextButton(imageSrc, text, size, clicked, tooltip = '') {
     const button = document.createElement('button');
     button.style.display = 'flex';
     button.innerHTML = `
@@ -344,6 +340,10 @@ export function itemTextButton(imageSrc, text, size, clicked) {
     button.style.paddingRight = '8px';
 
     img.style.transition = 'filter 0.3s';
+
+    if (tooltip) {
+        button.setAttribute('title', tooltip);
+    }
 
     button.addEventListener('mouseenter', () => {
         button.style.filter = 'brightness(70%)';
@@ -456,7 +456,9 @@ export function deserializeTaskExpression(serializedExp) {
         return value;
     }
 
-    return JSON.parse(serializedExp, reviver);
+    const ret = JSON.parse(serializedExp, reviver);
+    ret.activeView = null;
+    return ret;
 }
 
 

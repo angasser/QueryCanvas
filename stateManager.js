@@ -1,22 +1,23 @@
 import { ExpressionLocation, TaskExpressionState, TaskState, ViewportState, hoverType, shapeType, toolType } from './structs.js';
-import { deserializeTaskExpression, getAllOccurrences, getColor, getFragmentsFromShapes, getQueriesFromShapes, getRandomId, getShapesFromFragments, getShapesFromQuery, numberToLetter, serializeTaskExpression, toInt, toShapes } from './util.js';
+import { areIterablesEqual, deserializeTaskExpression, getAllOccurrences, getColor, getFragmentsFromShapes, getQueriesFromShapes, getRandomId, getShapesFromFragments, getShapesFromQuery, isSubset, numberToLetter, serializeTaskExpression, toInt, toShapes } from './util.js';
 import { updateUi } from './uiDisplay.js';
 import { updateViewport, findEmpySpace } from './viewport.js';
-import { convertVennToString } from './codeDisplay.js';
+import { charsSinceLastBreak, convertExpToString, convertVennToString } from './codeDisplay.js';
 
 export function updateAll(state, uiDelayable = false) {
-    // console.log(convertVennToString(state).content);
-    // console.log(serializeTaskExpression(state.activeExpression));
-    // console.log(state.activeExpression);
-    console.log(state.activeExpression);
     updateViewport(state.viewport, state);
-
     if (uiDelayable) {
         state.uiDisplay.isDirty = true;
     }
     else {
         updateUi(state.uiDisplay, state);
     }
+
+    // if (state.activeExpression !== null) {
+    //     console.log(state.activeExpression);
+    //     console.log(convertExpToString(state, state.activeExpression));
+    //     console.log(serializeTaskExpression(state.activeExpression));
+    // }
 }
 
 export function createNewQuery(state, expression, idOverride = null, addShape = true) {
@@ -118,6 +119,7 @@ export function toggleInactiveFragment(state, shapes) {
     } else {
         state.activeExpression.activeView.allInactiveFragments.add(i);
     }
+
     updateAll(state);
 }
 
@@ -179,10 +181,19 @@ export function addNewCodeViewport(state) {
 
 
 export function createViewportFromShapes(state, shapeIds) {
+    const oldView = state.activeExpression.activeView;
+    const inacFrag = new Set();
+    for (const inac of oldView.allInactiveFragments) {
+        const shapes = toShapes(inac);
+        if (isSubset(shapes, shapeIds)) {
+            inacFrag.add(inac);
+        }
+    }
+
     const shapes = new Map();
     let center = { x: 0, y: 0 };
     for (const shape of shapeIds) {
-        const shapInst = state.activeExpression.activeView.shapes.get(shape);
+        const shapInst = oldView.shapes.get(shape);
         center.x += shapInst.center.x;
         center.y += shapInst.center.y;
         shapes.set(shape, shapInst);
@@ -192,9 +203,14 @@ export function createViewportFromShapes(state, shapeIds) {
     center.x /= Math.max(1, shapeIds.size);
     center.y /= Math.max(1, shapeIds.size);
 
-    const id = addNewViewport(state, true);
-    state.activeExpression.viewportStates.get(id).shapes = shapes;
+    updateAll(state, true);
 
+    const id = addNewViewport(state, false);
+    const newView = state.activeExpression.viewportStates.get(id);
+    newView.shapes = shapes;
+    newView.allInactiveFragments = inacFrag;
+    updateAll(state, true);
+    switchViewport(state, oldView.id);
     createNewShape(state, -id, center);
 }
 
@@ -242,7 +258,7 @@ export function setHoverFromQueris(state, queries, hoverType) {
     state.activeExpression.hoveringType = hoverType;
 
     state.activeExpression.hoveredQueries = queries;
-    state.activeExpression.hoveredShapes = getShapesFromQuery(state, queries);
+    state.activeExpression.hoveredShapes = getShapesFromQuery(state.activeExpression.activeView, queries);
     state.activeExpression.hoveredFragments = getFragmentsFromShapes(state, state.activeExpression.hoveredShapes);
 }
 
@@ -257,32 +273,39 @@ export function defaultExpressionState(state) {
     return exp;
 }
 
-export function createTask(state, title, codeString, expressionMap) {
-    const expressions = new Map([[0, defaultExpressionState(state)]]);
-    for (const [key, value] of expressionMap) {
-        const occ = getAllOccurrences(codeString, key);
-        for (const i of occ) {
-            let id;
-            do id = getRandomId();
-            while (expressions.has(id));
 
-            const exp = deserializeTaskExpression(value);
-            const loc = new ExpressionLocation(id, i, i + key.length);
-            exp.id = id;
-            exp.loc = loc;
-            expressions.set(id, exp, exp);
-        }
+
+export function createTask(state, title, taskDesc, queryDesc, codeDesc, codeString, expressionMap) {
+    const expressions = new Map();
+    for (const [key, value] of expressionMap) {
+        let id;
+        do id = getRandomId();
+        while (expressions.has(id));
+
+        const varI = codeString.indexOf(`[${key}v]`);
+        codeString = codeString.replace(`[${key}v]`, value.varString);
+        const varLoc = new ExpressionLocation(id, varI, varI + value.varString.length);
+
+        const qI = codeString.indexOf(`[${key}]`);
+        codeString = codeString.replace(`[${key}]`, value.expressionString);
+        const loc = new ExpressionLocation(id, qI, qI + value.expressionString.length);
+        
+        const exp = deserializeTaskExpression(value.expression);
+        exp.id = id;
+        exp.loc = loc;
+        exp.varLoc = varLoc;
+        expressions.set(id, exp);
     }
 
-    return new TaskState(title, codeString, expressions);
+    return new TaskState(title, taskDesc, queryDesc, codeDesc, codeString, expressions);
 }
 
 export function switchTask(state, taskTitle) {
+    state.activeTask.hasBeenViewed = true;
     state.activeTask = state.tasks.get(taskTitle);
     state.activeExpression = state.activeTask.activeExpression;
 
     state.selectedToolTab = state.activeTask.codeString !== "" ? toolType.code : toolType.result;
-
     updateAll(state);
 }
 
@@ -290,8 +313,8 @@ export function switchExpression(state, expression) {
     state.activeExpression = expression;
 
     state.activeTask.activeExpression = expression;
-    console.log(expression, state.activeTask.activeExpression, state.activeExpression);
-
+    if(expression !== null)
+        state.activeExpression.activeView = state.activeExpression.viewportStates.get(0);
     updateAll(state);
 }
 

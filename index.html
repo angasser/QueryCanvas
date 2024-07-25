@@ -34,27 +34,27 @@
             width: 30%;
             /* width: 512px; */
             z-index: 1000; 
-            margin: 20px;
+            margin: 5px;
         }
 
         #titleTab {
             position: absolute; 
             top: 0; 
             left: 40%;
-            right: calc(30% + 20px);
+            right: calc(30% + 10px);
             /* left: calc(512px + 64px + 40px); 
             right: calc(512px + 40px); */
             z-index: 1000; 
-            margin: 20px;
+            margin: 5px;
         }
 
         #toolTab{
             position: absolute; 
             top: 0; 
             left: 0; 
-            width: calc(40% - 20px);
+            width: calc(40% - 10px);
             z-index: 1000; 
-            margin: 20px;
+            margin: 5px;
         }
 
         #queryRow {
@@ -70,10 +70,61 @@
             gap: 4px;
         }
 
-        .codeHovered {
+        #devTab{
+            position: absolute; 
+            bottom: 0; 
+            right: 0; 
+            width: 128px;
+            z-index: 1000; 
+            margin: 20px;
+            background-color: #ffffff;
+            border: 2px solid rgb(100, 100, 100);
+        }
+
+        .codeExpSelected:after {
+            content: "";
+            display: block;
+            position: absolute;
             background-color: #cae5ef; 
+            top: -2px;
+            left: -8px;
+            right: -8px;
+            bottom: -2px;
             color: black; 
-            border-radius: 3px; 
+            border-radius: 16px; 
+        }
+
+
+        .queryGlyph {
+            background: url(./svgs/icons8-query-80.png) no-repeat center center;
+            background-size: contain;
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            padding: 2px;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+
+        .queryGlyphCancel{
+            background: url(./svgs/icons8-cancel.svg) no-repeat center center;
+            background-size: contain;
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            padding: 2px;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+
+
+        .codeHovered {
+            content: "";
+            display: block;
+            position: absolute;
+            box-shadow: 0 0 0 4px #4885ff;
+            border-radius: 16px;
+            z-index: 5000;
         }
 
         .codeViewHovered {
@@ -96,7 +147,12 @@
             text-align: right;
             background-color: transparent;
             border: none; 
+            border-bottom: 2px transparent solid;
             outline: none; 
+        }
+        
+        .query-content:hover {
+            border-bottom: 2px solid #1a1a1a;
         }
 
         .outlinedText {
@@ -129,9 +185,13 @@
             text-align: left;
             background-color: transparent;
             border: none; 
+            border-bottom: 2px transparent solid;
             outline: none; 
         }
 
+        .title-input:hover {
+            border-bottom: 2px solid #ccc;
+        }
 
         .topButton {
             display: flex;
@@ -213,6 +273,7 @@
     </style> 
 </head>
 <body>
+<div class="myGlyphMarginClass">    </div>
     <canvas id="backgroundCanvas"></canvas>
     <canvas id="mainCanvas"></canvas>
 
@@ -254,7 +315,18 @@
         <div class="listTab" id="menuTab" style="width: 512px;">
         </div>
         <div class="listTab" id="codeTab">
-            <div id="code" name="code"></div>
+            <div id="codeScroll">
+                <div style="margin: 24px; font-size: 24px;">
+                    <div id="codeTitleWrap" style="margin: 24px; font-size: 24px; display: flex; align-items: center; justify-content: space-between;">
+                        <b id="codeTitle"></b>
+                    </div>
+                    <div id="taskDescription"></div>
+                    <br>
+                    <div id="taskTypeDescription"></div>
+                </div>
+                <br>
+                <div id="code" name="code"></div>
+            </div>
         </div>
     </div>
     <div id="titleTab">
@@ -275,6 +347,12 @@
             <div class="listTab" id="titleList">
             </div>
         </div>
+    </div>
+
+    <div id="devTab">
+        <div>Dev Tab</div>
+        <input type="checkbox" id="toggleCheckbox">
+        <label for="toggleCheckbox">Query mode</label>
     </div>
 
 

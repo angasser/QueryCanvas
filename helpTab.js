@@ -22,7 +22,7 @@ export function updateHelpTab(state, uiDisplay) {
         <h2>General</h2>
 
         <img class="helpImage" src="./imgs/general.png">
-        <div>This program tries to make boolean more intuitive.</div>
+        <div>This program tries to make boolean expressions more intuitive.</div>
         <div>It is thought to be used parallel with a code editor, where any textual boolean query can be visualized.</div>
         <div>The system is based on Venn Diagrams where you can simulate query interactions by overalpping them.</div>
         
@@ -66,7 +66,6 @@ export function updateHelpTab(state, uiDisplay) {
 
         <img class="helpImage" src="./imgs/variable.png">
         <div>Click on the "+" to create a new variable. If you have selected other shapes you will create a variable out of these shapes.</div>
-        <div>With box selection you can move multiple items.</div>
         <hr>
 
         <img class="helpImage" src="./imgs/variableSelect.png">

@@ -64,8 +64,8 @@ function createResultRow(state, uiDisplay, frag) {
     const viewport = state.activeExpression.activeView;
     const fragShapes = toShapes(frag);
     
-    const overlapping = getAllOverlapping(state, fragShapes);
-    const ty = getQueryType(state, fragShapes, overlapping);
+    const overlapping = getAllOverlapping(state.activeExpression.activeView, fragShapes);
+    const ty = getQueryType(viewport, fragShapes, overlapping);
     if (ty == textQueryType.None)
         return;
 
@@ -302,7 +302,7 @@ function setRowHover(state, row, isHighlighted, getHover) {
 }
 
 
-export function getQueryType(state, shapeIds, overlapping)
+export function getQueryType(view, shapeIds, overlapping)
 {
     if (shapeIds.length === 0)
         return textQueryType.None;
@@ -319,7 +319,7 @@ export function getQueryType(state, shapeIds, overlapping)
         return textQueryType.Query2;
     }
 
-    const t = getActivesAndInactives(state.activeExpression.activeView, overlapping);
+    const t = getActivesAndInactives(view, overlapping);
     const activeCount = t.active.length;
     const inactiveCount = t.inactive.length;
 
@@ -341,7 +341,7 @@ export function getQueryType(state, shapeIds, overlapping)
         return textQueryType.AllTrueExcept;
     }
 
-    if (state.activeExpression.activeView.allInactiveFragments.has(toInt(shapeIds)))
+    if (view.allInactiveFragments.has(toInt(shapeIds)))
         return textQueryType.None;
     return textQueryType.Normal;
 }

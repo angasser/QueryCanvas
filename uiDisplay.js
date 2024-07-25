@@ -1,6 +1,6 @@
 import { itemButton, getShapesFromQuery, setElementInteraction, itemTextButton, areSetsEqual, numberToLetter, darkColor, hexToRgb, getShapesInBox } from './util.js';
-import { createNewQuery, removeQuery, createNewShape, removeShape, addNewViewport, switchViewport, removeViewport, updateViewportName, updateAll, setHoverFromShapes, createViewportFromShapes } from './stateManager.js';
-import { interactionType, shapeType, hoverType, toToolType, toolType } from './structs.js';
+import { createNewQuery, removeQuery, createNewShape, removeShape, addNewViewport, switchViewport, removeViewport, updateViewportName, updateAll, setHoverFromShapes, createViewportFromShapes, switchExpression } from './stateManager.js';
+import { interactionType, shapeType, hoverType, toToolType, toolType, modifyMode } from './structs.js';
 import { updateResultTab } from './resultTab.js';
 import { updateViewport } from './viewport.js';
 import { updateCodeTab } from './codeDisplay.js';
@@ -54,6 +54,21 @@ export function initializeUiInput(uiDisplay, state) {
         if(uiDisplay.isDirty)
             updateUi(uiDisplay, state);
     }, 200);
+
+    // Dev tab
+    const checkbox = document.getElementById('toggleCheckbox');
+    checkbox.checked = true;
+    checkbox.addEventListener('change', function () {
+        if (this.checked) {
+            state.modifyMode = modifyMode.QueryOnly;
+            if(state.activeTask.expressions.has(0))
+                switchExpression(state, state.activeTask.expressions.get(0));
+        } else {
+            state.modifyMode = modifyMode.CodeOnly;
+            switchExpression(state, null);
+        }
+
+    });
     
     // query bar
     uiDisplay.queryBar.addEventListener('click', () => {
@@ -84,8 +99,6 @@ export function initializeUiInput(uiDisplay, state) {
         }
     });
 
-    
-
     // tool bar
     for (let i = 0; i < uiDisplay.toolBar.children.length; i++) {
         const button = uiDisplay.toolBar.children[i];
@@ -107,11 +120,12 @@ export function initializeUiInput(uiDisplay, state) {
 export function updateQueryBar(uiDisplay, state) {
     uiDisplay.queryAddButton.innerHTML = '';
     toggleVisiblity(uiDisplay.queryBar, state.hasExp());
+    uiDisplay.queryToggle.innerHTML = "";
 
     if (!state.hasExp())
         return;
 
-    const noQueries = state.activeExpression.queries.size <= 1 || (state.activeExpression.queries.size === 2 && state.activeExpression.viewportStates.size > 1 && state.activeExpression.activeView.id !== 0);
+    const noQueries = !hasQueries(state);
     if (noQueries) {
         state.activeExpression.areQueriesVisible = false;
     }
@@ -123,7 +137,7 @@ export function updateQueryBar(uiDisplay, state) {
     const queryToggle = `<img style="visibility: ${noQueries ? "hidden" : "visible"};" src="${visibilityIcon}" alt="Icon" width="48">`;
     uiDisplay.queryToggle.innerHTML = queryToggle;
 
-    const buttonText = noQueries ? "Create new Query" : state.activeExpression.areQueriesVisible ? "Queries" : "Show Queries";
+    const buttonText = getQueryTabBaseTitle(state);
     uiDisplay.queryTitleText.innerHTML = buttonText;
 
     uiDisplay.queryAddButton.appendChild(itemButton("./svgs/icons8-plus.svg", 48, (event) => {
@@ -133,7 +147,15 @@ export function updateQueryBar(uiDisplay, state) {
         uiDisplay.queryTitleText.innerHTML = "Create new Query";
     }, () => {
         uiDisplay.queryTitleText.innerHTML = buttonText;
-    }));
+    }, true, "Create new Query"));
+}
+
+function hasQueries(state) {
+    return state.activeExpression.queries.size > 2 || (state.activeExpression.queries.size === 2 && (state.activeExpression.viewportStates.size === 1 || state.activeExpression.activeView.id === 0));
+}
+
+function getQueryTabBaseTitle(state) {
+    return !hasQueries(state) ? "Create new Query" : state.activeExpression.areQueriesVisible ? "Queries" : "Show Queries";
 }
 
 export function updateToolBar(uiDisplay, state) {
@@ -169,6 +191,10 @@ function updateTitleBar(uiDisplay, state) {
 
     if (!state.hasExp()) {
         toggleTabList(uiDisplay.titleList, false);
+
+        uiDisplay.titleOverwrite.innerHTML = state.modifyMode === modifyMode.CodeOnly ? "Textual code only" : "Select a query";
+        uiDisplay.titleOverwrite.style.visibility = "visible";
+        uiDisplay.titleInput.style.visibility = "hidden";
         return;
     }
 
@@ -194,7 +220,7 @@ function updateTitleBar(uiDisplay, state) {
     }
         
     const titleInput = uiDisplay.titleInput;
-    titleInput.setAttribute("value", state.activeExpression.viewportStates.get(selectedId).name);
+    titleInput.value = state.activeExpression.viewportStates.get(selectedId).name;
 
     const isBoxSelected = state.activeExpression.boxSelectionBox !== null && state.activeExpression.boxSelectedShapes.size > 0;
     uiDisplay.titleOverwrite.innerHTML = isBoxSelected ? "Create Variable from selection" : "Add new Variable";
@@ -218,15 +244,23 @@ function updateTitleBar(uiDisplay, state) {
     }, () => {
         uiDisplay.titleOverwrite.style.visibility = "hidden";
         uiDisplay.titleInput.style.visibility = "visible";
-    });
+    }, true, isBoxSelected ? "Create Variable from selection" : "Add new Variable");
 
     uiDisplay.titleAddButton.appendChild(addButton);
 
-    const arrowButton = state.activeExpression.isViewportSelectionVisible ? "./svgs/icons8-up-100.png" : "./svgs/icons8-down-button-100.png";
+    const isBackButton = state.activeExpression.activeView.id !== 0;
+    const arrowButton = isBackButton ? "./svgs/icons8-back-100.png" :
+        state.activeExpression.isViewportSelectionVisible ? "./svgs/icons8-up-100.png" : "./svgs/icons8-down-button-100.png";
     const toggleButton = itemButton(arrowButton, 48, () => {
-        state.activeExpression.isViewportSelectionVisible = !state.activeExpression.isViewportSelectionVisible;
+        if (isBackButton) {
+            switchViewport(state, 0);
+        }
+        else {
+            state.activeExpression.isViewportSelectionVisible = !state.activeExpression.isViewportSelectionVisible;
+        }
         updateAll(state);
-    }, null, null, state.activeExpression.viewportStates.size > 1);
+    }, null, null, state.activeExpression.viewportStates.size > 1,
+        isBackButton ? "Bach to main viewport" : "Toggle viewports");
 
     uiDisplay.titleToggle.appendChild(toggleButton);
 
@@ -257,7 +291,7 @@ function addTitleRow(uiDisplay, state, view) {
         if (isConfirmed) {
             removeViewport(state, view.id);
         }
-    }, null, null, view.id !== 0));
+    }, null, null, view.id !== 0, "Remove variable and viewport"));
     
 
     listItem.insertAdjacentHTML('beforeend', getQueryCircle(state, -view.id, 32));
@@ -287,12 +321,12 @@ export function updateQueryDisplay(uiDisplay, state) {
     const selectedQuery = state.activeExpression.selectedQuery;
     state.activeExpression.selectedQuery = selectedQuery;
     for (const query of state.activeExpression.queries.values()) {
-        if(-query.id !== state.activeExpression.activeView.id && getShapesFromQuery(state, query.id).size !== 0)
+        if(-query.id !== state.activeExpression.activeView.id && getShapesFromQuery(state.activeExpression.activeView, query.id).size !== 0)
             addQueryRow(uiDisplay, state, query);
     }
 
     for (const query of state.activeExpression.queries.values()) {
-        if(query.id !== 0 && -query.id !== state.activeExpression.activeView.id &&getShapesFromQuery(state, query.id).size === 0)
+        if(query.id !== 0 && -query.id !== state.activeExpression.activeView.id &&getShapesFromQuery(state.activeExpression.activeView, query.id).size === 0)
             addQueryRow(uiDisplay, state, query);
     }    
 }
@@ -319,12 +353,12 @@ export function addQueryRow(uiDisplay, state, query) {
     iconWrap.innerHTML = getQueryCircle(state, query.id);
     queryRow.appendChild(iconWrap);
 
-    const isDisabled = getShapesFromQuery(state, query.id).size === 0;
+    const isDisabled = getShapesFromQuery(state.activeExpression.activeView, query.id).size === 0;
 
     queryRow.addEventListener('mouseenter', () => {
         if (isDisabled)
             return;
-        const hoveredShapes = getShapesFromQuery(state, query.id);
+        const hoveredShapes = getShapesFromQuery(state.activeExpression.activeView, query.id);
         if (state.activeExpression.hoveringType !== hoverType.viewport &&
             state.activeExpression.hoveredQueries.size === 1 &&
             state.activeExpression.hoveredQueries.has(query.id) &&
@@ -339,7 +373,7 @@ export function addQueryRow(uiDisplay, state, query) {
     // Shape rows
     if (state.activeExpression.visibleQueryShapeRows.has(query.id)) {
         const rows = listItem.querySelector('.shape-rows');
-        const shapes = getShapesFromQuery(state, query.id);
+        const shapes = getShapesFromQuery(state.activeExpression.activeView, query.id);
         for (const shape of shapes) 
             addShapeRow(uiDisplay, rows, state, shape);
     }
@@ -350,7 +384,6 @@ export function addQueryRow(uiDisplay, state, query) {
     if (state.activeExpression.selectedQuery !== null && state.activeExpression.selectedQuery.type === "query" && state.activeExpression.selectedQuery.id === query.id) {
         setElementInteraction(queryRow, interactionType.Selected);
         inputField.select();
-        console.log("sssss");
     }
     else if (isDisabled) {
         setElementInteraction(queryRow, interactionType.Disabled)
@@ -371,11 +404,20 @@ function createQueryEditButtons(state, query, row) {
             state.activeExpression.visibleQueryShapeRows.add(query.id);
         }
         updateAll(state);
-    }, null, null, getShapesFromQuery(state, query.id).size !== 0));
+    }, () => {
+        state.uiDisplay.queryTitleText.innerHTML = "Toggle shapes";
+    }, () => {
+        state.uiDisplay.queryTitleText.innerHTML = getQueryTabBaseTitle(state);
+    }, getShapesFromQuery(state.activeExpression.activeView, query.id).size !== 0, "Toggle shapes"));
 
     row.appendChild(itemButton("./svgs/icons8-plus.svg", 32, () => {
         createNewShape(state, query.id);
-    }, null, null));
+    }, () => {
+        state.uiDisplay.queryTitleText.innerHTML = "Add new Shape";
+    }, () => {
+        state.uiDisplay.queryTitleText.innerHTML = getQueryTabBaseTitle(state);
+    }, true, "Add new Shape to viewport"));
+        
     row.appendChild(itemButton("./svgs/icons8-cross.svg", 32, () => {
         if (query.id <= 0) {
             const isConfirmed = confirm("Are you sure you want to remove this variable and viewport?");
@@ -389,11 +431,19 @@ function createQueryEditButtons(state, query, row) {
                 removeQuery(state, query.id);
             }
         }
-    }, null, null, query.id !== 0));
+    }, () => {
+        state.uiDisplay.queryTitleText.innerHTML = "Delete Query";
+    }, () => {
+        state.uiDisplay.queryTitleText.innerHTML = getQueryTabBaseTitle(state);
+    }, query.id !== 0, "Delete Query" ));
 
     row.appendChild(itemButton("./svgs/icons8-arrow-100.png", 32, () => {
         switchViewport(state, -query.id);
-    }, null, null, query.id <= 0));
+    }, () => {
+        state.uiDisplay.queryTitleText.innerHTML = "Open Variable";
+    }, () => {
+        state.uiDisplay.queryTitleText.innerHTML = getQueryTabBaseTitle(state);
+    }, query.id <= 0, "Open Variable in viewport"));
 }
 
 function createQueryInputField(state, query, row) {
@@ -486,9 +536,13 @@ function addShapeRow(uiDisplay, queryRow, state, shape) {
         if (isConfirmed) {
             removeShape(state, shape);
         }
-    }, null, null));
+    }, () => {
+        state.uiDisplay.queryTitleText.innerHTML = "Remove Shape";
+    }, () => {
+        state.uiDisplay.queryTitleText.innerHTML = getQueryTabBaseTitle(state);
+    }, true, "Remove Shape from viewport"));
 
-    const shapeImg = shapInst.shapeType === shapeType.Circle ? "./svgs/icons8-circle-90.png" :
+    const shapeImg = shapInst.shapeType === shapeType.Circle ? "./svgs/circle-90.png" :
         shapInst.shapeType === shapeType.Rectangle ? "./svgs/icons8-square-100.png" :
             "./svgs/icons8-rhombus-67.png";
     listItem.appendChild(itemTextButton(shapeImg, "Shape", 32, () => {
@@ -502,8 +556,8 @@ function addShapeRow(uiDisplay, queryRow, state, shape) {
             shapInst.shapeType = shapeType.Circle;
         }
 
-    updateAll(state);
-    }, null, null));
+        updateAll(state);
+    }, null, null, "Change shape type"));
 
 
     queryRow.appendChild(listItem);

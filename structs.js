@@ -53,7 +53,7 @@ export class GameState{
 
         const stateId = 0;
         this.activeExpression = defaultExpressionState(this);        
-        this.activeTask = new TaskState("Sandbox", "", new Map([[stateId, this.activeExpression]]));
+        this.activeTask = new TaskState("Sandbox", "Use the sandbox to test and play around with the system", "", "", "", new Map([[stateId, this.activeExpression]]));
         this.activeTask.activeExpression = this.activeExpression;
         this.tasks = new Map([["Sandbox", this.activeTask]]);
 
@@ -63,14 +63,25 @@ export class GameState{
     hasExp() {
         return this.activeExpression !== null;
     }
+
+    isActiveView(viewId) {
+        if (!this.hasExp())
+            return false;
+        return this.activeExpression.activeView.id === viewId;
+    }
 }
 
 export class TaskState {
-    constructor(title, codeString, expressions) {
+    constructor(title, taskDesc, queryDescription, codeDescription, codeString, expressions) {
         this.title = title;
         this.codeString = codeString;
         this.expressions = expressions;
+        this.taskDesc = taskDesc;
+        this.queryDescription = queryDescription;
+        this.codeDescription = codeDescription;
+
         this.activeExpression = null;
+        this.hasBeenViewed = false;
     }
 }
 
@@ -117,6 +128,10 @@ export class ViewportState{
     constructor(id, name) {
         this.id = id;
         this.name = name;
+
+        this.trans = [0, 0];
+        this.scale = 1;
+
         this.shapes = new Map();
         this.fragments = new Map();
 
