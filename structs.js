@@ -129,7 +129,7 @@ export class ViewportState{
         this.id = id;
         this.name = name;
 
-        this.trans = [0, 0];
+        this.trans = { x: 0, y: 0 };
         this.scale = 1;
 
         this.shapes = new Map();

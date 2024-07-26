@@ -55,6 +55,7 @@ export function initializeUiInput(uiDisplay, state) {
             updateUi(uiDisplay, state);
     }, 200);
 
+
     // Dev tab
     const checkbox = document.getElementById('toggleCheckbox');
     checkbox.checked = true;
@@ -230,7 +231,7 @@ function updateTitleBar(uiDisplay, state) {
     const addIcon = isBoxSelected ?  "./svgs/icons8-plus-box.svg" : "./svgs/icons8-plus.svg";
     const addButton = itemButton(addIcon, 48, (event) => {
         if (isBoxSelected) {
-            const shapeIds = state.activeExpression.boxSelectedShapes;  //getShapesInBox(state, state.activeExpression.boxSelectionBox);
+            const shapeIds = state.activeExpression.boxSelectedShapes;  
             createViewportFromShapes(state, shapeIds);
         }
         else {
@@ -490,12 +491,12 @@ function addShapeRow(uiDisplay, queryRow, state, shape) {
     listItem.style.alignItems = 'center';
     listItem.style.display = 'flex';
     listItem.style.padding = '2px';
-    listItem.style.paddingLeft = '72px';
+    listItem.style.paddingLeft = '48px';
     listItem.style.paddingRight = '16px';
     listItem.style.gap = '4px';
     listItem.innerHTML = `
         <div class="row-buttons" style="
-            width: 32px;
+            width: 66px;
             gap: 4px;">
         </div>
         <input style="flex-grow: 1; width: 32px;"
@@ -531,6 +532,22 @@ function addShapeRow(uiDisplay, queryRow, state, shape) {
     }
 
     const rowButtons = listItem.querySelector('.row-buttons');
+    rowButtons.appendChild(itemButton("./svgs/icons8-find-100.png", 32, () => {
+        const view = state.activeExpression.activeView;
+        view.scale = 1;
+        view.trans = {
+            x: -(shapInst.center.x - window.innerWidth / 2),
+            y: -(shapInst.center.y - window.innerHeight / 2)
+        };
+        
+        state.viewport.redrawBackground(state);
+        updateAll(state);
+    }, () => {
+        state.uiDisplay.queryTitleText.innerHTML = "Find Shape";
+    }, () => {
+        state.uiDisplay.queryTitleText.innerHTML = getQueryTabBaseTitle(state);
+    }, true, "Move to the shape in the viewport"));
+    
     rowButtons.appendChild(itemButton("./svgs/icons8-cross.svg", 32, () => {
         const isConfirmed = confirm("Are you sure you want to remove this shape?");
         if (isConfirmed) {
@@ -599,6 +616,42 @@ export function getQueryCircle(state, queryId, size=48) {
             </div>
         </div>
     `;
+}
+
+export function drawCanvasQueryCircle(c, query, pos, scale) {
+    const isVariable = query.id <= 0;
+    const queryText = isVariable ? numberToLetter(-query.id) : query.id;
+
+    if (isVariable) {
+        const sideLength = scale * 36; 
+        c.save();
+        c.translate(pos.x, pos.y); 
+        c.rotate(45 * Math.PI / 180);
+        c.beginPath();
+        c.rect(-sideLength / 2, -sideLength / 2, sideLength, sideLength); 
+        c.fillStyle = query.color;
+        c.fill();
+        c.strokeStyle = darkColor(hexToRgb(query.color));
+        c.lineWidth = 3;
+        c.stroke();
+        c.restore(); 
+    }
+    else {
+        c.beginPath(); 
+        c.arc(pos.x, pos.y, scale * 24, 0, Math.PI * 2, true);
+        c.fillStyle = query.color; 
+        c.fill();
+        c.strokeStyle = darkColor(hexToRgb(query.color)); 
+        c.lineWidth = 3;
+        c.stroke();
+
+    }
+    c.font = '32px Helvetica';
+    c.fillStyle = 'white';
+    c.fillText(queryText, pos.x, pos.y + 10);
+    c.strokeStyle = 'black'; 
+    c.lineWidth = 1; 
+    c.strokeText(queryText, pos.x, pos.y + 10);
 }
 
 export function toggleTabList(list, visible) {

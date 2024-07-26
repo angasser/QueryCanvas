@@ -4,8 +4,8 @@ import { updateUi } from './uiDisplay.js';
 import { updateViewport, findEmpySpace } from './viewport.js';
 import { charsSinceLastBreak, convertExpToString, convertVennToString } from './codeDisplay.js';
 
-export function updateAll(state, uiDelayable = false) {
-    updateViewport(state.viewport, state);
+export function updateAll(state, uiDelayable = false, viewportRecalculate = true) {
+    updateViewport(state.viewport, state, viewportRecalculate);
     if (uiDelayable) {
         state.uiDisplay.isDirty = true;
     }
@@ -41,9 +41,9 @@ export function createNewQuery(state, expression, idOverride = null, addShape = 
         queryContent = expression.viewportStates.get(-queryId).name;
     }
     else {
-        queryContent = `Query ${queryId}`;
+        queryContent = `Query_${queryId}`;
         while (expression.queries.values().some(q => q.content === queryContent))
-            queryContent = `Query ${queryId++}`;
+            queryContent = `Query_${queryId++}`;
     }
 
     expression.queries.set(queryId, {
@@ -147,7 +147,7 @@ export function addNewViewport(state, stayInCurrentViewport = false) {
     while (state.activeExpression.viewportStates.has(id))
         id++;
 
-    const name = `Variable ${numberToLetter(id)}`;
+    const name = `Variable_${numberToLetter(id)}`;
     const newView = new ViewportState(id, name);
 
     state.activeExpression.viewportStates.set(id, newView);

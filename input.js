@@ -1,4 +1,4 @@
-import { getShapesUnderPoint, updateViewport } from './viewport.js';
+import { getShapesUnderPoint, inverseTransformPoint, transformPoint, updateViewport } from './viewport.js';
 import { initializeUiInput } from './uiDisplay.js';
 import { areSetsEqual, getQueriesFromShapes, getShapeBoundingBox, getShapesInBox, toInt } from './util.js';
 import { setHoverFromFragments, setHoverFromShapes, switchViewport, toggleInactiveFragment, updateAll } from './stateManager.js';
@@ -14,6 +14,13 @@ export class InputHandler {
         this.isDragging = false;
         this.dragStartPoint = null;
         this.dragLastPoint = null;
+
+        this.isRightClickDragging = false;
+        this.rightClickDragStartPoint = null;
+
+        this.mousePos = { x: 0, y: 0 };
+        this.mouseViewPos = { x: 0, y: 0 };
+
         initializeInput(this, state.viewport.mainCanvas, state);
         initializeUiInput(state.uiDisplay, state);
         initialzeCodeInput(state, state.codeDisplay);
@@ -28,97 +35,37 @@ function initializeInput(handler, canvas) {
         if (!state.hasExp())
             return;
 
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        if (e.button === 2) {
+            handler.isRightClickDragging = true;
+            handler.rightClickDragStartPoint = { x: e.clientX, y: e.clientY };
 
-        if (state.activeExpression.boxSelectionBox !== null && 
-            mouseX >= state.activeExpression.boxSelectionBox.minX &&
-            mouseX <= state.activeExpression.boxSelectionBox.maxX &&
-            mouseY >= state.activeExpression.boxSelectionBox.minY &&
-            mouseY <= state.activeExpression.boxSelectionBox.maxY
-        ) {
-            handler.isDragging = true;
-            handler.dragStartPoint = { x: mouseX, y: mouseY };
-            handler.dragLastPoint = { x: mouseX, y: mouseY };
-            state.activeExpression.selectedShapes = state.activeExpression.boxSelectedShapes; 
+            e.preventDefault();
+            return;
         }
-        else if (state.activeExpression.hoveringType === hoverType.viewport && state.activeExpression.hoveredQueries.size !== 0) {
-            handler.isDragging = true;
-            handler.dragStartPoint = { x: mouseX, y: mouseY };
-            handler.dragLastPoint = { x: mouseX, y: mouseY };
-            state.activeExpression.selectedShapes = state.activeExpression.hoveredShapes;
-            state.activeExpression.boxSelectionBox = null;
-        }
-        else {
-            handler.state.activeExpression.isBoxSelecting = true;
-            handler.dragStartPoint = { x: mouseX, y: mouseY };
-        }
+        else
+            leftClickDown(handler, canvas, e);
     });
 
     canvas.addEventListener('mousemove', (e) => {
         if (!state.hasExp())
             return;
 
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        if (handler.isDragging) {
-            const dragOffset = {
-                x: mouseX - handler.dragLastPoint.x,
-                y: mouseY - handler.dragLastPoint.y,
-            }
+        handler.mousePos = { x: e.clientX, y: e.clientY };
+        handler.mouseViewPos = inverseTransformPoint(state.activeExpression.activeView, handler.mousePos);
 
-            handler.dragLastPoint = { x: mouseX, y: mouseY };
-
-            for (const shapeId of state.activeExpression.selectedShapes) {
-                const shape = state.activeExpression.activeView.shapes.get(shapeId);
-                shape.center.x += dragOffset.x;
-                shape.center.y += dragOffset.y;
-            }
-
-            if (state.activeExpression.boxSelectionBox !== null) {
-                state.activeExpression.boxSelectionBox.minX += dragOffset.x;
-                state.activeExpression.boxSelectionBox.minY += dragOffset.y;
-                state.activeExpression.boxSelectionBox.maxX += dragOffset.x;
-                state.activeExpression.boxSelectionBox.maxY += dragOffset.y;
-            }
-
-            updateAll(state, true);
-        }
-
-        if (handler.state.activeExpression.isBoxSelecting) {
-            setBoxHover(handler, mouseX, mouseY, state);
-        }
-        else {
-            setPointHover(mouseX, mouseY, state);
-        }
+        rightClickDrag(handler, canvas, e);
+        leftClickDrag(handler, canvas, e);
     });
 
-    canvas.addEventListener('mouseup', () => {
+    canvas.addEventListener('mouseup', (e) => {
         if (!state.hasExp())
             return;
 
-        if (handler.isDragging) {
-            const tolerance = 4; 
-            if (Math.abs(handler.dragStartPoint.x - handler.dragLastPoint.x) <= tolerance &&
-                Math.abs(handler.dragStartPoint.y - handler.dragLastPoint.y) <= tolerance) {
-                toggleInactiveFragment(handler.state, state.activeExpression.hoveredShapes);
-            }
-
-            handler.isDragging = false;
-            handler.dragStartPoint = null;
-
-            state.activeExpression.selectedShapes = new Set();
+        if (e.button === 2 && handler.isRightClickDragging) { 
+            handler.isRightClickDragging = false;
         }
-
-        if (handler.state.activeExpression.isBoxSelecting) {
-            handler.state.activeExpression.isBoxSelecting = false;
-            handler.state.activeExpression.boxSelectionBox = state.activeExpression.hoveredShapes.size === 0 ? null : 
-                getShapeBoundingBox(handler.state, handler.state.activeExpression.hoveredShapes, 16);
-
-            updateQueryTags(state);
-        }
+        else
+                leftClickUp(handler, canvas);
     });
 
     canvas.addEventListener('dblclick', (e) => {
@@ -126,9 +73,7 @@ function initializeInput(handler, canvas) {
             return;
 
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        const hoveredShapes = getShapesUnderPoint({ x: mouseX, y: mouseY }, state);
+        const hoveredShapes = getShapesUnderPoint(handler.mouseViewPos, state);
         if (hoveredShapes.size === 1) {
             for (const shapeId of hoveredShapes) {
                 const shape = state.activeExpression.activeView.shapes.get(shapeId);
@@ -138,13 +83,144 @@ function initializeInput(handler, canvas) {
             }
         }
     });
+
+    canvas.addEventListener('wheel', (e) => {
+        if (!state.hasExp())
+            return;
+
+        const view = state.activeExpression.activeView;
+        handler.mouseViewPos = inverseTransformPoint(view, { x: e.clientX, y: e.clientY });
+        e.preventDefault(); // Prevent the page from scrolling
+
+        const scaleFactor = 0.1; 
+        const zoomIn = e.deltaY < 0; 
+
+        // Calculate the new scale
+        let newScale = zoomIn ? view.scale * (1 + scaleFactor) : view.scale / (1 + scaleFactor);
+        newScale = Math.max(0.6, Math.min(3, newScale));
+
+        const size = {x: window.innerWidth, y: window.innerHeight};
+        const factor = (1 - (newScale / view.scale));
+        const dx = (handler.mouseViewPos.x) * factor;
+        const dy = (handler.mouseViewPos.y) * factor;
+        console.log(factor, dx, dy, size, view.mouseViewPos);
+
+        view.trans.x += dx;
+        view.trans.y += dy;
+        view.scale = newScale;
+
+        // Redraw or update the viewport to reflect the changes
+        state.viewport.redrawBackground(state);
+        updateAll(state, true);
+    });
+
+    canvas.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
 }
 
-function setBoxHover(handler, mouseX, mouseY, state) {
-    const minX = Math.min(handler.dragStartPoint.x, mouseX);
-    const minY = Math.min(handler.dragStartPoint.y, mouseY);
-    const maxX = Math.max(handler.dragStartPoint.x, mouseX);
-    const maxY = Math.max(handler.dragStartPoint.y, mouseY);
+function leftClickDown(handler, canvas, e) {
+    const state = handler.state;
+
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const viewMouse = handler.mouseViewPos;
+
+    if (state.activeExpression.boxSelectionBox !== null && 
+        viewMouse.x >= state.activeExpression.boxSelectionBox.minX &&
+        viewMouse.x <= state.activeExpression.boxSelectionBox.maxX &&
+        viewMouse.y >= state.activeExpression.boxSelectionBox.minY &&
+        viewMouse.y <= state.activeExpression.boxSelectionBox.maxY
+    ) {
+        handler.isDragging = true;
+        handler.dragStartPoint = { x: mouseX, y: mouseY };
+        handler.dragLastPoint = { x: mouseX, y: mouseY };
+        state.activeExpression.selectedShapes = state.activeExpression.boxSelectedShapes; 
+    }
+    else if (state.activeExpression.hoveringType === hoverType.viewport && state.activeExpression.hoveredQueries.size !== 0) {
+        handler.isDragging = true;
+        handler.dragStartPoint = { x: mouseX, y: mouseY };
+        handler.dragLastPoint = { x: mouseX, y: mouseY };
+        state.activeExpression.selectedShapes = state.activeExpression.hoveredShapes;
+        state.activeExpression.boxSelectionBox = null;
+    }
+    else {
+        handler.state.activeExpression.isBoxSelecting = true;
+        handler.dragStartPoint = { x: mouseX, y: mouseY };
+    }
+}
+
+function leftClickDrag(handler, canvas, e) {
+    const state = handler.state;
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const view = state.activeExpression.activeView;
+    if (handler.isDragging) {
+        const dragOffset = {
+            x: (mouseX - handler.dragLastPoint.x) / view.scale,
+            y: (mouseY - handler.dragLastPoint.y) / view.scale,
+        }
+
+        handler.dragLastPoint = { x: mouseX, y: mouseY };
+
+        for (const shapeId of state.activeExpression.selectedShapes) {
+            const shape = state.activeExpression.activeView.shapes.get(shapeId);
+            shape.center.x += dragOffset.x;
+            shape.center.y += dragOffset.y;
+        }
+
+        if (state.activeExpression.boxSelectionBox !== null) {
+            state.activeExpression.boxSelectionBox.minX += dragOffset.x;
+            state.activeExpression.boxSelectionBox.minY += dragOffset.y;
+            state.activeExpression.boxSelectionBox.maxX += dragOffset.x;
+            state.activeExpression.boxSelectionBox.maxY += dragOffset.y;
+        }
+
+        updateAll(state, true);
+    }
+
+    if (handler.state.activeExpression.isBoxSelecting) {
+        const start = inverseTransformPoint(view, handler.dragStartPoint);
+        setBoxHover(start, handler.mouseViewPos, state);
+    }
+    else {
+        setPointHover(handler, state);
+    }
+}
+
+function leftClickUp(handler, canvas) {
+    const state = handler.state;
+    if (handler.isDragging) {
+        const tolerance = 4; 
+        if (Math.abs(handler.dragStartPoint.x - handler.dragLastPoint.x) <= tolerance &&
+            Math.abs(handler.dragStartPoint.y - handler.dragLastPoint.y) <= tolerance) {
+            toggleInactiveFragment(handler.state, state.activeExpression.hoveredShapes);
+        }
+
+        handler.isDragging = false;
+        handler.dragStartPoint = null;
+
+        state.activeExpression.selectedShapes = new Set();
+    }
+
+    if (handler.state.activeExpression.isBoxSelecting) {
+        handler.state.activeExpression.isBoxSelecting = false;
+        handler.state.activeExpression.boxSelectionBox = state.activeExpression.hoveredShapes.size === 0 ? null : 
+            getShapeBoundingBox(handler.state, handler.state.activeExpression.hoveredShapes, 16);
+
+        updateQueryTags(state);
+    }
+}
+
+function setBoxHover(pos1, pos2, state) {
+
+    const minX = Math.min(pos1.x, pos2.x);
+    const minY = Math.min(pos1.y, pos2.y);
+    const maxX = Math.max(pos1.x, pos2.x);
+    const maxY = Math.max(pos1.y, pos2.y);
     state.activeExpression.boxSelectionBox = {
         minX: minX, 
         minY: minY,
@@ -165,13 +241,33 @@ function setBoxHover(handler, mouseX, mouseY, state) {
     updateAll(state);
 }
 
-function setPointHover(mouseX, mouseY, state) {
-    const hoveredShapes = getShapesUnderPoint({ x: mouseX, y: mouseY }, state);
+function setPointHover(handler, state) {
+    const hoveredShapes = getShapesUnderPoint(handler.mouseViewPos, state);
     const i = toInt(hoveredShapes);
-    
+
     if (state.activeExpression.hoveredFragments.has(i))
         return;
 
     setHoverFromFragments(state, new Set([i]), hoverType.viewport);
     updateAll(state);
+}
+
+function rightClickDrag(handler, canvas, e) {
+    if (!handler.isRightClickDragging)
+        return;
+
+    const state = handler.state;
+    const currentPoint = { x: e.clientX, y: e.clientY };
+    const view = state.activeExpression.activeView;
+    const deltaX = currentPoint.x - handler.rightClickDragStartPoint.x;
+    const deltaY = currentPoint.y - handler.rightClickDragStartPoint.y;
+
+    view.trans.x += deltaX / view.scale;
+    view.trans.y += deltaY / view.scale;
+
+    handler.rightClickDragStartPoint = currentPoint;
+
+    e.preventDefault();
+    state.viewport.redrawBackground(state);
+    updateAll(state, true, false);
 }

@@ -1,4 +1,4 @@
-import { drawBackground } from "./viewportBackground.js";
+import { drawBackground, initBackgroundPattern } from "./viewportBackground.js";
 import { areIterablesEqual, areSetsEqual, colorLerp, drawFragment, getShapePoints, hexToRgb, rgbToString, toInt, toShapes } from "./util.js";
 import { shapeType, fragmentIterator, hoverType } from "./structs.js";
 import { updateQueryTags } from "./uiQueryTags.js";
@@ -14,24 +14,35 @@ export class Viewport {
         this.bgContext = this.backgroundCanvas.getContext('2d');
         this.mainContext = this.mainCanvas.getContext('2d');
 
-        this.updateCanvasSize();
+
+        initBackgroundPattern(this, 150);
+        // this.updateCanvasSize();
     }
 
-    updateCanvasSize() {
+    updateCanvasSize(state) {
         const width = window.innerWidth - 2;
         const height = window.innerHeight - 2;
         this.backgroundCanvas.width = width;
         this.backgroundCanvas.height = height;
         this.mainCanvas.width = width;
         this.mainCanvas.height = height;
+        this.redrawBackground(state);
+    }
 
-        drawBackground(this.bgContext, this.backgroundCanvas, 150);
+    redrawBackground(state) {
+        if (state.activeExpression !== null) {
+            const view = state.activeExpression.activeView;
+            drawBackground(this.bgContext, this, view.trans, view.scale);
+        }    
+        else
+            drawBackground(this.bgContext, this, {x: 0, y: 0}, 1);
     }
 }
 
-export function updateViewport(canvas, state) {
-    if (canvas.mainCanvas.width !== window.innerWidth || canvas.mainCanvas.height !== window.innerHeight) {
-        canvas.updateCanvasSize();
+export function updateViewport(canvas, state, viewportRecalculate=true) {
+    if (canvas.mainCanvas.width !== window.innerWidth - 2 ||
+        canvas.mainCanvas.height !== window.innerHeight - 2) {
+        canvas.updateCanvasSize(state);
     }
 
     const c = canvas.mainContext;
@@ -43,68 +54,77 @@ export function updateViewport(canvas, state) {
     }
 
     const activeView = state.activeExpression.activeView;
-    activeView.fragments = new Map();
 
-    const iter = new fragmentIterator(activeView.shapes);
-    while (iter.hasNext()) {
-        const fragShapes = iter.next();
-        let points;
-        let color = [0, 0, 0];
-        if (fragShapes.length === 0) {
-            continue;
-        }
+    if (viewportRecalculate) {
+        activeView.fragments = new Map();
+        const iter = new fragmentIterator(activeView.shapes);
+        while (iter.hasNext()) {
+            const fragShapes = iter.next();
+            let points;
+            let color = [0, 0, 0];
+            if (fragShapes.length === 0) {
+                continue;
+            }
 
         
-        if (fragShapes.length === 1) {
-            const shape = activeView.shapes.get(fragShapes[0]);
-            const query = state.activeExpression.queries.get(shape.queryId);
-            points = getShapePoints(shape);
-            color = hexToRgb(query.color);
+            if (fragShapes.length === 1) {
+                const shape = activeView.shapes.get(fragShapes[0]);
+                const query = state.activeExpression.queries.get(shape.queryId);
+                points = getShapePoints(shape);
+                color = hexToRgb(query.color);
+            }
+            else {
+                const prevI = toInt(fragShapes.slice(0, fragShapes.length - 1));
+                if (!activeView.fragments.has(toInt(fragShapes.slice(0, fragShapes.length - 1))))
+                    continue;
+
+                const prevFrag = activeView.fragments.get(prevI);
+                const newFrag = activeView.fragments.get(toInt([fragShapes[fragShapes.length - 1]]));
+                points = intersect(prevFrag.points, newFrag.points);
+                color = colorLerp(prevFrag.color, newFrag.color, 1 / fragShapes.length);
+            }
+
+            if (points === undefined ||
+                points.length === 0 ||
+                points.some(p => p.x < -1000 || p.y < -1000)) continue;
+
+            const i = toInt(fragShapes);
+            const isHovered = state.activeExpression.hoveredFragments.has(i);
+            const isInverted = state.activeExpression.activeView.allInactiveFragments.has(i);
+
+            activeView.fragments.set(i, {
+                fragmentId: i,
+                points: points,
+                color: color,
+                isInverted: isInverted,
+                isHovered: isHovered,
+            });
         }
-        else {
-            const prevI = toInt(fragShapes.slice(0, fragShapes.length - 1));
-            if (!activeView.fragments.has(toInt(fragShapes.slice(0, fragShapes.length - 1))))
-                continue;
-
-            const prevFrag = activeView.fragments.get(prevI);   
-            const newFrag = activeView.fragments.get(toInt([fragShapes[fragShapes.length - 1]]));
-            points = intersect(prevFrag.points, newFrag.points);
-            color = colorLerp(prevFrag.color, newFrag.color, 1 / fragShapes.length);
-        }
-
-        if (points === undefined ||
-            points.length === 0 ||
-            points.some(p => p.x < -1000 || p.y < -1000)) continue;
-
-        const i = toInt(fragShapes);
-        const isHovered = state.activeExpression.hoveredFragments.has(i);
-        const isInverted = state.activeExpression.activeView.allInactiveFragments.has(i);
-
-        activeView.fragments.set(i, {
-            fragmentId: i,
-            points: points,
-            color: color,
-            isInverted: isInverted,
-            isHovered: isHovered,
-        });
     }
 
 
     for (const frag of activeView.fragments.values()) {
-        drawFragment(c, frag);
+        drawFragment(c, activeView, frag);
     }
 
     updateQueryTags(state);
 }
 
 export function transformPoint(view, point) {
-    let transformedX = point[0] + view.trans[0];
-    let transformedY = point[1] + view.trans[1];
+    let transformedX = point.x + view.trans.x;
+    let transformedY = point.y + view.trans.y;
 
     transformedX *= view.scale;
     transformedY *= view.scale;
 
-    return [transformedX, transformedY];
+    return { x: transformedX, y: transformedY };
+}
+
+export function inverseTransformPoint(view, point) {
+    let transformedX = (point.x / view.scale) - view.trans.x;
+    let transformedY = (point.y / view.scale) - view.trans.y;
+
+    return { x: transformedX, y: transformedY };
 }
 
 export function findEmpySpace(state, radius) {

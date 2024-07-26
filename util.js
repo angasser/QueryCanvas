@@ -1,6 +1,7 @@
 import { interactionType, shapeType, toolType } from "./structs.js";
+import { transformPoint } from "./viewport.js";
 
-export function drawFragment(ctx, frag) {
+export function drawFragment(ctx, view, frag) {
     const points = frag.points;
     if (points.length < 3) return; // A polygon needs at least 3 points
 
@@ -16,9 +17,11 @@ export function drawFragment(ctx, frag) {
     ctx.lineWidth = 8;
 
     ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
+    let t = transformPoint(view, points[0]);
+    ctx.moveTo(t.x, t.y);
     for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
+        t = transformPoint(view, points[i]);
+        ctx.lineTo(t.x, t.y);
     }
     ctx.closePath();
 
@@ -421,7 +424,7 @@ export function colorLerp(color1, color2, t) {
 }
 
 export function darkColor(color) {
-    return rgbToString(colorLerp(color, [0, 0, 0], 0.5));
+    return rgbToString(colorLerp(color, [0, 0, 0], 0.4));
 }
 
 export function whitenColor(color) {
