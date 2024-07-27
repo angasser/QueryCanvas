@@ -1,5 +1,5 @@
-import { ExpressionLocation, TaskExpressionState, TaskState, ViewportState, hoverType, shapeType, toolType } from './structs.js';
-import { areIterablesEqual, deserializeTaskExpression, getAllOccurrences, getColor, getFragmentsFromShapes, getQueriesFromShapes, getRandomId, getShapesFromFragments, getShapesFromQuery, isSubset, numberToLetter, serializeTaskExpression, toInt, toShapes } from './util.js';
+import { ExpressionLocation, TaskExpressionState, TaskState, ViewportState, hoverType, interactionType, shapeType, toolType } from './structs.js';
+import { areIterablesEqual, deserializeTaskExpression, getAllOccurrences, getColor, getFragmentsFromShapes, getQueriesFromShapes, getRandomId, getShapesFromFragments, getShapesFromQuery, isSubset, numberToLetter, serializeTaskExpression, setElementInteraction, toInt, toShapes } from './util.js';
 import { updateUi } from './uiDisplay.js';
 import { updateViewport, findEmpySpace } from './viewport.js';
 import { charsSinceLastBreak, convertExpToString, convertVennToString } from './codeDisplay.js';
@@ -12,15 +12,9 @@ export function updateAll(state, uiDelayable = false, viewportRecalculate = true
     else {
         updateUi(state.uiDisplay, state);
     }
-
-    // if (state.activeExpression !== null) {
-    //     console.log(state.activeExpression);
-    //     console.log(convertExpToString(state, state.activeExpression));
-    //     console.log(serializeTaskExpression(state.activeExpression));
-    // }
 }
 
-export function createNewQuery(state, expression, idOverride = null, addShape = true) {
+export function createNewQuery(state, expression, idOverride = null, addShape = true, shouldSave = true) {
     expression.areQueriesVisible = true;
 
     let queryId = idOverride;
@@ -53,16 +47,22 @@ export function createNewQuery(state, expression, idOverride = null, addShape = 
     });
     expression.selectedQuery = { id: queryId, type: "query" };
 
+
     if (addShape) {
-        createNewShape(state, queryId);
+        createNewShape(state, queryId, null, false);
     }
+
+    if(shouldSave)
+        saveState(state, "Added new query " + queryContent);
 }
 
-export function removeQuery(state, queryId) {
-    state.activeExpression.queries.delete(queryId);
-    state.activeExpression.visibleQueryShapeRows.delete(queryId);
+export function removeQuery(state, queryId, doSave = true) {
+    const exp = state.activeExpression;
+    const query = exp.queries.get(queryId);
+    exp.queries.delete(queryId);
+    exp.visibleQueryShapeRows.delete(queryId);
 
-    for (const view of state.activeExpression.viewportStates.values()) {
+    for (const view of exp.viewportStates.values()) {
         for (const shape of view.shapes.values()) {
             if (shape.queryId === queryId) {
                 view.shapes.delete(shape.shapeId);
@@ -71,11 +71,14 @@ export function removeQuery(state, queryId) {
     }
     resetState(state);
 
+    if(doSave && query !== undefined)
+        saveState(state, "Removed query " + query.content);
+
     updateAll(state);
 }
 
 
-export function createNewShape(state, queryId, positionOverride = null) {
+export function createNewShape(state, queryId, positionOverride = null, shouldSave = true) {
 
     let shapeId = -1;
     do shapeId++;
@@ -94,11 +97,20 @@ export function createNewShape(state, queryId, positionOverride = null) {
     state.activeExpression.visibleQueryShapeRows = new Set([queryId]);
     state.activeExpression.boxSelectionBox = null;
 
+    if(shouldSave)
+        saveState(state, "Added new shape from " + state.activeExpression.queries.get(queryId).content);
     updateAll(state);
 }
 
-export function removeShape(state, shapeId, update = true) {
-    state.activeExpression.activeView.shapes.delete(shapeId);
+export function removeShape(state, shapeId, update = true, shouldSave = true) {
+    const exp = state.activeExpression;
+    const shape = exp.activeView.shapes.get(shapeId);
+    exp.activeView.shapes.delete(shapeId);
+
+    if (shouldSave && shape !== undefined) {
+        const query = exp.queries.get(shape.queryId);
+        saveState(state, "Removed shape from " + query.content);
+    }
 
     if (update) {
         resetState(state);
@@ -120,6 +132,7 @@ export function toggleInactiveFragment(state, shapes) {
         state.activeExpression.activeView.allInactiveFragments.add(i);
     }
 
+    saveState(state, "Toggled Venn diagram fragment");
     updateAll(state);
 }
 
@@ -142,7 +155,7 @@ export function resetState(state) {
     }
 }
 
-export function addNewViewport(state, stayInCurrentViewport = false) {
+export function addNewViewport(state, stayInCurrentViewport = false, shouldSave = true) {
     let id = 0;
     while (state.activeExpression.viewportStates.has(id))
         id++;
@@ -151,7 +164,7 @@ export function addNewViewport(state, stayInCurrentViewport = false) {
     const newView = new ViewportState(id, name);
 
     state.activeExpression.viewportStates.set(id, newView);
-    createNewQuery(state, state.activeExpression, -id, false);
+    createNewQuery(state, state.activeExpression, -id, false, false);
     
     if (stayInCurrentViewport) {
         state.activeExpression.selectedQuery = { id: id, type: "title-temp" };   
@@ -161,23 +174,28 @@ export function addNewViewport(state, stayInCurrentViewport = false) {
         state.activeExpression.selectedQuery = { id: id, type: "title" };
         switchViewport(state, id);
     }
+
+    if(shouldSave)
+        saveState(state, "Added new variable " + name);
+
     return id;
 }
 
-export function addNewCodeViewport(state) {
-    let id = 0;
-    while (state.activeExpression.viewportStates.has(id))
-        id++;
+// export function addNewCodeViewport(state) {
+//     let id = 0;
+//     while (state.activeExpression.viewportStates.has(id))
+//         id++;
 
-    const name = `View ${numberToLetter(id)}`;
-    const newView = new ViewportState(id, name);
+//     const name = `View ${numberToLetter(id)}`;
+//     const newView = new ViewportState(id, name);
 
-    state.activeExpression.viewportStates.set(id, newView);
-    createNewQuery(state, state.activeExpression, -id, false);
+//     state.activeExpression.viewportStates.set(id, newView);
+//     createNewQuery(state, state.activeExpression, -id, false);
     
-    switchViewport(state, id);
-    return id;
-}
+//     switchViewport(state, id);
+//     saveState(state);
+//     return id;
+// }
 
 
 export function createViewportFromShapes(state, shapeIds) {
@@ -198,20 +216,22 @@ export function createViewportFromShapes(state, shapeIds) {
         center.y += shapInst.center.y;
         shapes.set(shape, shapInst);
 
-        removeShape(state, shape, false);
+        removeShape(state, shape, false, false);
     }
     center.x /= Math.max(1, shapeIds.size);
     center.y /= Math.max(1, shapeIds.size);
 
     updateAll(state, true);
 
-    const id = addNewViewport(state, false);
+    const id = addNewViewport(state, false, false);
     const newView = state.activeExpression.viewportStates.get(id);
     newView.shapes = shapes;
     newView.allInactiveFragments = inacFrag;
     updateAll(state, true);
     switchViewport(state, oldView.id);
-    createNewShape(state, -id, center);
+    createNewShape(state, -id, center, false);
+
+    saveState(state, "Added new variable " + newView.name + " from shapes");
 }
 
 export function removeViewport(state, viewportId) {
@@ -220,15 +240,26 @@ export function removeViewport(state, viewportId) {
         return;
     }
 
+    const view = state.activeExpression.viewportStates.get(viewportId);
+
     state.activeExpression.viewportStates.delete(viewportId);
-    removeQuery(state, -viewportId);
+    removeQuery(state, -viewportId, false);
     state.activeExpression.isViewportSelectionVisible = false;
+
+    if(view !== undefined)
+        saveState(state, "Removed variable " + view.title);
     switchViewport(state, 0);
 }
 
 export function updateViewportName(state, viewportId, name) {
-    state.activeExpression.viewportStates.get(viewportId).name = name;
+    const view = state.activeExpression.viewportStates.get(viewportId);
+    const oldName = view.name;
+
+    view.name = name;
     state.activeExpression.queries.get(-viewportId).content = name;
+
+    if(oldName !== name)
+        saveState(state, "Updated variable from " + oldName + " to " + name);
     updateAll(state);
 }
 
@@ -269,7 +300,7 @@ export function defaultExpressionState(state) {
         new Map(),
         new Map([[0, new ViewportState(0, "Main View")]]));
     
-    createNewQuery(state, exp, 0, false);
+    createNewQuery(state, exp, 0, false, false);
     return exp;
 }
 
@@ -301,11 +332,17 @@ export function createTask(state, title, taskDesc, queryDesc, codeDesc, codeStri
 }
 
 export function switchTask(state, taskTitle) {
-    state.activeTask.hasBeenViewed = true;
+    if(state.activeTask !== null)
+        state.activeTask.hasBeenViewed = true;
+
+    state.undoStack = [];
+    state.redoStack = [];
+
     state.activeTask = state.tasks.get(taskTitle);
     state.activeExpression = state.activeTask.activeExpression;
 
     state.selectedToolTab = state.activeTask.codeString !== "" ? toolType.code : toolType.result;
+    saveState(state, "Switched to task " + taskTitle);
     updateAll(state);
 }
 
@@ -315,6 +352,51 @@ export function switchExpression(state, expression) {
     state.activeTask.activeExpression = expression;
     if(expression !== null)
         state.activeExpression.activeView = state.activeExpression.viewportStates.get(0);
+    updateAll(state);
+}
+
+export function saveState(state, tooltip) {
+    state.redoStack = [];
+    const clone = structuredClone(state.activeTask);
+    state.undoStack.push(
+        {
+            state: clone,
+            tooltip: tooltip
+        });
+
+    while (state.undoStack.length > 30) {
+        state.undoStack.shift();
+    }
+
+    setElementInteraction(state.uiDisplay.undoButton, state.undoStack.length > 1 ? interactionType.None : interactionType.Disabled);
+    setElementInteraction(state.uiDisplay.redoButton, state.redoStack.length > 0 ? interactionType.None : interactionType.Disabled);
+}
+
+export function undoState(state) {
+    if (state.undoStack.length <= 1)
+        return;
+
+    const undo = state.undoStack.pop();
+    state.redoStack.push(undo);
+
+    const newState = structuredClone(state.undoStack[state.undoStack.length-1].state);
+    state.tasks.set(newState.title, newState);
+    state.activeTask = newState;
+    state.activeExpression = newState.activeExpression;
+    updateAll(state);
+}
+
+export function redoState(state) {
+    if (state.redoStack.length === 0)
+        return;
+
+    const redo = state.redoStack.pop();
+    state.undoStack.push(redo);
+
+    const newState = structuredClone(redo.state);
+    state.tasks.set(newState.title, newState);
+    state.activeTask = newState;
+    state.activeExpression = newState.activeExpression;
     updateAll(state);
 }
 

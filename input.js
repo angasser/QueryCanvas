@@ -1,7 +1,7 @@
 import { getShapesUnderPoint, inverseTransformPoint, transformPoint, updateViewport } from './viewport.js';
 import { initializeUiInput } from './uiDisplay.js';
 import { areSetsEqual, getQueriesFromShapes, getShapeBoundingBox, getShapesInBox, toInt } from './util.js';
-import { setHoverFromFragments, setHoverFromShapes, switchViewport, toggleInactiveFragment, updateAll } from './stateManager.js';
+import { saveState, setHoverFromFragments, setHoverFromShapes, switchViewport, toggleInactiveFragment, updateAll } from './stateManager.js';
 import { updateBoxHover, updateQueryTags } from './uiQueryTags.js';
 import { hoverType } from './structs.js';
 import { initialzeCodeInput } from './codeDisplay.js';
@@ -103,7 +103,6 @@ function initializeInput(handler, canvas) {
         const factor = (1 - (newScale / view.scale));
         const dx = (handler.mouseViewPos.x) * factor;
         const dy = (handler.mouseViewPos.y) * factor;
-        console.log(factor, dx, dy, size, view.mouseViewPos);
 
         view.trans.x += dx;
         view.trans.y += dy;
@@ -195,8 +194,9 @@ function leftClickUp(handler, canvas) {
     const state = handler.state;
     if (handler.isDragging) {
         const tolerance = 4; 
-        if (Math.abs(handler.dragStartPoint.x - handler.dragLastPoint.x) <= tolerance &&
-            Math.abs(handler.dragStartPoint.y - handler.dragLastPoint.y) <= tolerance) {
+        const isClick = Math.abs(handler.dragStartPoint.x - handler.dragLastPoint.x) <= tolerance &&
+            Math.abs(handler.dragStartPoint.y - handler.dragLastPoint.y) <= tolerance;
+        if (isClick) {
             toggleInactiveFragment(handler.state, state.activeExpression.hoveredShapes);
         }
 
@@ -204,6 +204,10 @@ function leftClickUp(handler, canvas) {
         handler.dragStartPoint = null;
 
         state.activeExpression.selectedShapes = new Set();
+
+        if (!isClick) {
+            saveState(state, "Moved shapes");
+        }
     }
 
     if (handler.state.activeExpression.isBoxSelecting) {

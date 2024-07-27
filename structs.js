@@ -51,11 +51,18 @@ export class GameState{
 
         this.modifyMode = modifyMode.QueryOnly;
 
-        const stateId = 0;
-        this.activeExpression = defaultExpressionState(this);        
-        this.activeTask = new TaskState("Sandbox", "Use the sandbox to test and play around with the system", "", "", "", new Map([[stateId, this.activeExpression]]));
-        this.activeTask.activeExpression = this.activeExpression;
-        this.tasks = new Map([["Sandbox", this.activeTask]]);
+
+        this.activeExpression = null;
+        this.activeTask = null;
+        this.tasks = new Map();
+
+        this.undoStack = [];
+        this.redoStack = [];
+        // const stateId = 0;
+        // this.activeExpression = defaultExpressionState(this);        
+        // this.activeTask = new TaskState("Sandbox", "Use the sandbox to test and play around with the system", "", "", "", new Map([[stateId, this.activeExpression]]));
+        // this.activeTask.activeExpression = this.activeExpression;
+        // this.tasks = new Map([["Sandbox", this.activeTask]]);
 
         this.selectedToolTab = toolType.result;
     }

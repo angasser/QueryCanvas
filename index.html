@@ -65,7 +65,7 @@
             width: calc(100% - 20px);
             height: 48px;
             padding: 10px;
-            cursor: pointer;
+            cursor: default;
             font-size: 24px;
             gap: 4px;
         }
@@ -194,6 +194,7 @@
         }
 
         .topButton {
+            box-sizing: border-box;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -224,8 +225,10 @@
         }
 
         .iconButton{
-            width: var(48); 
-            height: var(48); 
+            display: inline-flex;
+            align-items: center;
+            width: 48px; 
+            height: 48px; 
             border: none;
             background: white;
             padding: 0;
@@ -234,6 +237,19 @@
             visibility: visible;
             pointer-events: auto;
             flex-shrink: 0;
+        }
+
+        .iconButton:active {
+            filter: brightness(50%);
+        }
+
+        .iconButton:disabled {
+            filter: brightness(90%);
+            cursor: default;
+        }
+
+        .iconButton:not(:disabled):hover {
+            filter: brightness(70%);
         }
 
         .iconStyle{
@@ -292,21 +308,28 @@
         </div>
     </div>
     <div id="toolTab">
-        <div id="toolBar" style="display: flex;">
-            <button class="topButton" style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 0 0 64px;" title="Menu Tab">
-                <img class="iconStyle" src="./svgs/icons8-menu.svg"/>
+        <div id="toolBar" class="topButton" style="display: flex; filter: none; cursor: default; gap: 2px">
+            <button id="menuButton" class="iconButton"  title="Menu Tab">
+                <img class="iconStyle" src="./svgs/icons8-menu-100.png" />
             </button>
-            <button class="topButton" style="border-radius: 0; flex: 0 0 64px;" title="Tutorial">
+            <button id="helpButton" class="iconButton"  title="Tutorial">
                 <img class="iconStyle" src="./svgs/icons8-help-100.png"/>
             </button>
-            <button class="topButton" style="border-radius: 0; flex: 1;" title="Code Tab">
-                <div class="centerWrap">Code</div>
+            <button id="codeButton" class="iconButton"  title="Code Tab">
                 <img class="iconStyle" src="./svgs/icons8-code-64.png"/>
             </button>
-            <button class="topButton" style="border-top-left-radius: 0; border-bottom-left-radius: 0; flex: 1;" title="Result Tab">
-                Result
+            <button id="resultButton" class="iconButton"  title="Result Tab">
                 <img class="iconStyle" src="./svgs/icons8-result-100.png"/>
             </button>
+            <button id="undoButton" class="iconButton"  title="Undo">
+                <img class="iconStyle" src="./svgs/icons8-undo-100.png"/>
+            </button>
+            <button id="redoButton" class="iconButton"  title="Redo">
+                <img class="iconStyle" src="./svgs/icons8-redo-100.png"/>
+            </button>
+            <div id="toolTitle" style="flex-grow: 1; padding-left: 16px;">
+                
+            </div>
         </div>
         <div class="listTab" id="resultTab">
         </div>
@@ -330,7 +353,7 @@
         </div>
     </div>
     <div id="titleTab">
-            <button id="titleBar" class="topButton">
+            <button id="titleBar" class="topButton" style="cursor: default">
                 <div id="titleToggle" class="centerWrap"></div>
                 <input id="titleInput" type="text" value="Dynamic Name" class="title-input" style="width: calc(100% - 128px); font-weight: bold;">
                 <div id="titleOverwrite" style="

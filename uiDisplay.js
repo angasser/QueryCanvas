@@ -1,5 +1,5 @@
 import { itemButton, getShapesFromQuery, setElementInteraction, itemTextButton, areSetsEqual, numberToLetter, darkColor, hexToRgb, getShapesInBox } from './util.js';
-import { createNewQuery, removeQuery, createNewShape, removeShape, addNewViewport, switchViewport, removeViewport, updateViewportName, updateAll, setHoverFromShapes, createViewportFromShapes, switchExpression } from './stateManager.js';
+import { createNewQuery, removeQuery, createNewShape, removeShape, addNewViewport, switchViewport, removeViewport, updateViewportName, updateAll, setHoverFromShapes, createViewportFromShapes, switchExpression, undoState, redoState, saveState } from './stateManager.js';
 import { interactionType, shapeType, hoverType, toToolType, toolType, modifyMode } from './structs.js';
 import { updateResultTab } from './resultTab.js';
 import { updateViewport } from './viewport.js';
@@ -14,6 +14,15 @@ export class UIDisplay {
         this.helpTab = document.querySelector('#helpTab');
         this.menuTab = document.querySelector('#menuTab');
         this.titleList = document.querySelector('#titleList');
+
+        this.menuButton = document.querySelector('#menuButton');
+        this.helpButton = document.querySelector('#helpButton');
+        this.undoButton = document.querySelector('#undoButton');    
+        this.redoButton = document.querySelector('#redoButton');
+        this.codeButton = document.querySelector('#codeButton');
+        this.resultButton = document.querySelector('#resultButton');
+        this.toolTitle = document.querySelector("#toolTitle");
+        this.toolSelectButtons = [this.menuButton, this.helpButton, this.codeButton, this.resultButton];
 
         this.queryBar = document.querySelector('#queryBar');
         this.titleBar = document.querySelector('#titleBar');
@@ -101,8 +110,8 @@ export function initializeUiInput(uiDisplay, state) {
     });
 
     // tool bar
-    for (let i = 0; i < uiDisplay.toolBar.children.length; i++) {
-        const button = uiDisplay.toolBar.children[i];
+    for (let i = 0; i < uiDisplay.toolSelectButtons.length; i++) {
+        const button = uiDisplay.toolSelectButtons[i];
 
         button.addEventListener('click', () => {
             const tab = toToolType(i);
@@ -114,7 +123,52 @@ export function initializeUiInput(uiDisplay, state) {
             state.selectedToolTab = tab;
             updateAll(state);
         });
+
+        button.addEventListener('mouseover', () => {
+            const tab = toToolType(i);
+            setToolTabTitle(uiDisplay, getToolTabBaseTitle(state, tab));
+        });
+
+        button.addEventListener('mouseout', () => {
+            setToolTabTitle(uiDisplay, getToolTabBaseTitle(state));
+        });
     }
+
+    function updateUndoHover(){
+        if(state.undoStack.length <= 1)
+            setToolTabTitle(uiDisplay, "");
+        else
+            setToolTabTitle(uiDisplay, "Undo: " + state.undoStack[state.undoStack.length - 1].tooltip);
+    }
+
+    uiDisplay.undoButton.addEventListener('click', () => {
+        undoState(state);
+        updateUndoHover();
+    });
+    uiDisplay.undoButton.addEventListener('mouseover', () => {
+        updateUndoHover();
+    });
+    uiDisplay.undoButton.addEventListener('mouseout', () => {
+        setToolTabTitle(uiDisplay, getToolTabBaseTitle(state));
+    });
+
+    function updateRedoHover() {
+        if(state.redoStack.length < 1)
+            setToolTabTitle(uiDisplay, "");
+        else
+            setToolTabTitle(uiDisplay, "Redo: " + state.redoStack[state.redoStack.length - 1].tooltip);
+    }
+    
+    uiDisplay.redoButton.addEventListener('click', () => {
+        redoState(state);
+        updateRedoHover();
+    });
+    uiDisplay.redoButton.addEventListener('mouseover', () => {
+        updateRedoHover();
+    });
+    uiDisplay.redoButton.addEventListener('mouseout', () => {
+        setToolTabTitle(uiDisplay, getToolTabBaseTitle(state));
+    });
 }
 
 
@@ -159,9 +213,22 @@ function getQueryTabBaseTitle(state) {
     return !hasQueries(state) ? "Create new Query" : state.activeExpression.areQueriesVisible ? "Queries" : "Show Queries";
 }
 
+function getToolTabBaseTitle(state, tool = null) {
+    const t = tool === null ? state.selectedToolTab : tool;
+    return t === toolType.result ? "Result view" :
+        t === toolType.code ? "Code editor" :
+            t === toolType.help ? "Tutorial" :
+                t === toolType.menu ? "Menu" :
+                    "";
+}
+
+function setToolTabTitle(uiDisplay, content){
+    uiDisplay.toolTitle.innerHTML = content;
+}
+
 export function updateToolBar(uiDisplay, state) {
-    for (let i = 0; i < uiDisplay.toolBar.children.length; i++) {
-        const button = uiDisplay.toolBar.children[i];
+    for (let i = 0; i < uiDisplay.toolSelectButtons.length; i++) {
+        const button = uiDisplay.toolSelectButtons[i];
         if (state.selectedToolTab === i) {
             setElementInteraction(button, interactionType.Selected);
         }
@@ -178,6 +245,9 @@ export function updateToolBar(uiDisplay, state) {
         }
     }
 
+    setElementInteraction(uiDisplay.undoButton, state.undoStack.length > 1 ? interactionType.None : interactionType.Disabled);
+    setElementInteraction(uiDisplay.redoButton, state.redoStack.length > 0 ? interactionType.None : interactionType.Disabled);
+
     updateResultTab(state, uiDisplay);
     updateHelpTab(state, uiDisplay);
     updateCodeTab(state, state.codeDisplay);
@@ -193,7 +263,7 @@ function updateTitleBar(uiDisplay, state) {
     if (!state.hasExp()) {
         toggleTabList(uiDisplay.titleList, false);
 
-        uiDisplay.titleOverwrite.innerHTML = state.modifyMode === modifyMode.CodeOnly ? "Textual code only" : "Select a query";
+        uiDisplay.titleOverwrite.innerHTML = state.modifyMode === modifyMode.CodeOnly ? "Textual code only" : "Select a boolean expression";
         uiDisplay.titleOverwrite.style.visibility = "visible";
         uiDisplay.titleInput.style.visibility = "hidden";
         return;
@@ -456,6 +526,7 @@ function createQueryInputField(state, query, row) {
     
     inputField.addEventListener('blur', function (event) {
         const val = event.target.value;
+        const oldName = query.content;
         if (val.length > 0) {
             if (query.id <= 0) {
                 updateViewportName(state, -query.id, val);
@@ -465,6 +536,9 @@ function createQueryInputField(state, query, row) {
             }
         }
         state.activeExpression.selectedQuery = null;
+
+        if (oldName !== query.content)
+            saveState(state, "Changed query name from " + oldName + " to " + query.content);
         updateAll(state);
     });
 
@@ -514,6 +588,9 @@ function addShapeRow(uiDisplay, queryRow, state, shape) {
             shapInst.radius2 = parseInt(event.target.value);
             updateViewport(state.viewport, state);
         });
+        slider2.addEventListener('blur', function(event) {
+            saveState(state, "Changed shape size");
+        });
     }
 
     listItem.addEventListener('mouseenter', () => {
@@ -536,7 +613,7 @@ function addShapeRow(uiDisplay, queryRow, state, shape) {
         const view = state.activeExpression.activeView;
         view.scale = 1;
         view.trans = {
-            x: -(shapInst.center.x - window.innerWidth / 2),
+            x: -(shapInst.center.x - window.innerWidth / 2) + 180,
             y: -(shapInst.center.y - window.innerHeight / 2)
         };
         
@@ -572,7 +649,7 @@ function addShapeRow(uiDisplay, queryRow, state, shape) {
         else {
             shapInst.shapeType = shapeType.Circle;
         }
-
+        saveState(state, "Changed shape type");
         updateAll(state);
     }, null, null, "Change shape type"));
 
@@ -582,7 +659,11 @@ function addShapeRow(uiDisplay, queryRow, state, shape) {
     const slider = listItem.querySelector('#radius');
     slider.addEventListener('input', function(event) {
         shapInst.radius = parseInt(event.target.value);
+
         updateViewport(state.viewport, state);
+    });
+    slider.addEventListener('blur', function(event) {
+        saveState(state, "Changed shape size");
     });
 }
 

@@ -150,7 +150,8 @@ export function getShapesInBox(state, box) {
 }
 
 export function setElementInteraction(element, interaction) {
-    if (interaction === interactionType.Disabled) {
+    element.disabled = interaction === interactionType.Disabled;
+    if (element.disabled) {
         element.style.color = "#c1c1c1";
     }
     else element.style.color = "black";
@@ -299,19 +300,19 @@ export function itemButton(imageSrc, size, clicked, hovered, unhovered, visible 
     // Event listeners
     button.addEventListener('mouseenter', () => {
         if (!visible) return; 
-        button.style.filter = 'brightness(70%)';
+        // button.style.filter = 'brightness(70%)';
         if (hovered) hovered();
     });
 
     button.addEventListener('mouseleave', () => {
         if (!visible) return; 
-        button.style.filter = 'brightness(100%)';
+        // button.style.filter = 'brightness(100%)';
         if (unhovered) unhovered();
     });
 
     button.addEventListener('click', (event) => {
         if (!visible) return; 
-        button.style.filter = 'brightness(50%)';
+        // button.style.filter = 'brightness(50%)';
         setTimeout(() => img.style.filter = 'brightness(70%)', 100);
         if (clicked) clicked(event);
     });
@@ -435,7 +436,7 @@ export function serializeTaskExpression(exp) {
     function replacer(key, value) {
         if (key === "fragments") // Will be recalculated
             return { _type: 'Map', entries: [] };
-        
+     
         if (value instanceof Set) {
             return { _type: 'Set', values: Array.from(value) };
         } else if (value instanceof Map) {

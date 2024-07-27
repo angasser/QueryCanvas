@@ -1,6 +1,6 @@
 import { resetTask } from "./menuTab.js";
 import { getActivesAndInactives, getQueryType, textQueryType } from "./resultTab.js";
-import { addNewCodeViewport, setHoverFromFragments, switchExpression, switchTask, updateAll } from "./stateManager.js";
+import { setHoverFromFragments, switchExpression, switchTask, updateAll } from "./stateManager.js";
 import { ExpressionLocation, hoverType, modifyMode, toolType } from "./structs.js";
 import { toggleTabList } from "./uiDisplay.js";
 import { areSetsEqual, getFragmentsFromShapes, getShapesFromQuery, isSubset, itemTextButton, toInt, toShapes } from "./util.js";

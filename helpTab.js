@@ -41,7 +41,8 @@ export function updateHelpTab(state, uiDisplay) {
         <hr>
 
         <img class="helpImage" src="./imgs/shapeBar.png" style="padding: 8px 0px;">
-        <div>Left button: Delete shape</div>
+        <div>Left button: Move camera to this shape in the viewport</div>
+        <div>Middle button: Delete shape</div>
         <div>Slider: Change shape size</div>
         <div>Right button: Change shape</div>
         <hr>
@@ -52,6 +53,9 @@ export function updateHelpTab(state, uiDisplay) {
         <img class="helpImage" src="./imgs/viewShapes.png">
         <div>Left click and drag to move the shapes.</div>
         <div>Single left click to invert the fragment.</div>
+        <br>
+        <div>Right click and drag to move the camera.</div>
+        <div>Use the scroll wheel to zoom.</div>
         <hr>
 
 
@@ -86,6 +90,21 @@ export function updateHelpTab(state, uiDisplay) {
         <div>Second button: Opens the tutorial.</div>
         <div>Third button: Opens the code tab.</div>
         <div>Fourth button: Opens the query result tab.</div>
+        <div>Fith button: Undoes the last action.</div>
+        <div>Fith button: Redoes the last undone action.</div>
+        <hr>
+
+        <img class="helpImage" src="./imgs/menuTab.png">
+        <div>In the menu you can select the different tasks.</div>
+        <div>Tasks that haven't been opened yet are marked with a dot.</div>
+        <hr>
+
+        <img class="helpImage" src="./imgs/codeTab.png">
+        <div>In the code Tab you can find the task description and the corresponding code.</div>
+        <div>You can reset any task. Keep in mind that this will remove all your progress on this task.</div>
+        <br>
+        <div>Depending on the task you can always either only edit the code or use the query system.</div>
+        <div>You can open a boolean expression in the system clicking on the expression or the icon on the left side.</div>
         <hr>
 
         <img class="helpImage" src="./imgs/result.png">
