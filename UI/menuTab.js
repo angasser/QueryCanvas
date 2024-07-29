@@ -1,12 +1,12 @@
-import { defaultExpressionState, switchExpression, switchTask } from "./stateManager.js";
-import { TaskState, toolType } from "./structs.js";
-import { taskSandbox } from "./tasks/Sandbox.js";
-import { task1 } from "./tasks/task1.js";
-import { task2 } from "./tasks/task2.js";
-import { task3 } from "./tasks/task3.js";
-import { task4 } from "./tasks/task4.js";
-import { task5 } from "./tasks/task5.js";
-import { task6 } from "./tasks/task6.js";
+import { defaultExpressionState, switchExpression, switchTask } from "../stateManager.js";
+import { TaskState, toolType } from "../structs.js";
+import { taskSandbox } from "../tasks/Sandbox.js";
+import { task1 } from "../tasks/task1.js";
+import { task2 } from "../tasks/task2.js";
+import { task3 } from "../tasks/task3.js";
+import { task4 } from "../tasks/task4.js";
+import { task5 } from "../tasks/task5.js";
+import { task6 } from "../tasks/task6.js";
 import { toggleTabList } from "./uiDisplay.js";
 
 const tasks = [taskSandbox, task1, task2, task3, task4, task5, task6];
@@ -19,6 +19,7 @@ export function initializeTasks(state) {
     switchTask(state, "Sandbox");
     const sandbox = state.tasks.get("Sandbox");
     switchExpression(state, sandbox.expressions.values().next().value);
+    state.selectedToolTab = toolType.help;
 }
 
 export function resetTask(state, taskTitle) {

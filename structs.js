@@ -1,5 +1,3 @@
-import { addNewViewport, createNewQuery, defaultExpressionState } from "./stateManager.js";
-import { toInt } from "./util.js";
 
 export const modifyMode = Object.freeze({
     All: 0,
@@ -50,7 +48,7 @@ export class GameState{
         this.codeDisplay = codeDisplay;
 
         this.modifyMode = modifyMode.QueryOnly;
-
+        this.tabWidth = 0;
 
         this.activeExpression = null;
         this.activeTask = null;
@@ -58,11 +56,6 @@ export class GameState{
 
         this.undoStack = [];
         this.redoStack = [];
-        // const stateId = 0;
-        // this.activeExpression = defaultExpressionState(this);        
-        // this.activeTask = new TaskState("Sandbox", "Use the sandbox to test and play around with the system", "", "", "", new Map([[stateId, this.activeExpression]]));
-        // this.activeTask.activeExpression = this.activeExpression;
-        // this.tasks = new Map([["Sandbox", this.activeTask]]);
 
         this.selectedToolTab = toolType.result;
     }

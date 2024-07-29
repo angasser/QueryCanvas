@@ -1,3 +1,6 @@
+const SHOW_BACKGROUND = true;
+
+
 export function initBackgroundPattern(canvas, gridSize) {
     const patternCanvas = document.createElement('canvas');
     const pCtx = patternCanvas.getContext('2d');
@@ -36,6 +39,7 @@ export function initBackgroundPattern(canvas, gridSize) {
 }
 
 export function drawBackground(c, canvas, trans, scale) {
+    if(!SHOW_BACKGROUND) return;
     // Use the created pattern
 
     const pattern = c.createPattern(canvas.backgroundPattern, 'repeat');

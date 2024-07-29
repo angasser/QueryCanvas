@@ -1,5 +1,7 @@
-import { drawCanvasQueryCircle, getQueryCircle } from "./uiDisplay.js";
+import { drawCanvasQueryCircle } from "../UI/uiDisplay.js";
 import { transformPoint } from "./viewport.js";
+
+const DISPLAY_TEXT = true;
 
 export function updateQueryTags(state) {
     state.uiDisplay.queryTagRef.innerHTML = '';
@@ -29,33 +31,23 @@ export function updateBoxHover(state) {
 }
 
 function addQueryTag(state, shape) {
+    // if (shape.shapeType === shapeType.Rectangle)
+    //     return;
+
     const c = state.viewport.mainContext;
     const center = transformPoint(state.activeExpression.activeView, shape.center);
 
-    c.font = '20px Arial';
-    c.textAlign = 'center';
-    c.fillStyle = 'black';
     const query = state.activeExpression.queries.get(shape.queryId);
-    c.fillText(query.content, center.x, center.y + 20);
+    if (DISPLAY_TEXT) {
+        c.font = '20px Arial';
+        c.textAlign = 'center';
+        c.fillStyle = 'black';
+        c.fillText(query.content, center.x, center.y + 20);
+        
+        drawCanvasQueryCircle(c, query, { x: center.x, y: center.y - 30 }, 1);
+    }
+    else {
+        drawCanvasQueryCircle(c, query, { x: center.x, y: center.y }, 1);
+    }
 
-    drawCanvasQueryCircle(c, query, { x: center.x, y: center.y - 30 }, 1);
-    // const tag = document.createElement('div');
-    // tag.style.display = 'flex';
-    // tag.style.pointerEvents = 'none';
-    // tag.style.position = 'absolute'; 
-    // tag.style.left = `${center.x}px`;
-    // tag.style.top = `${center.y}px`;
-    // tag.style.flexDirection = 'column';
-    // tag.style.justifyContent = 'center';
-    // tag.style.alignItems = 'center';
-    // tag.style.transform = 'translate(-50%, -50%)';
-    // tag.style.zIndex = '100';
-    // tag.style.fontSize = '24px';
-    
-    // tag.innerHTML = `
-    //     ${getQueryCircle(state, query.id)}
-    //     ${query.content}
-    // `;
-
-    // state.uiDisplay.queryTagRef.appendChild(tag);
 }

@@ -1,5 +1,5 @@
 import { interactionType, shapeType, toolType } from "./structs.js";
-import { transformPoint } from "./viewport.js";
+import { transformPoint } from "./viewport/viewport.js";
 
 export function drawFragment(ctx, view, frag) {
     const points = frag.points;
@@ -462,7 +462,16 @@ export function deserializeTaskExpression(serializedExp) {
 
     const ret = JSON.parse(serializedExp, reviver);
     ret.activeView = null;
+    for(const [key, value] of ret.viewportStates.entries()) {
+        value.trans = { x: 0, y: 0 };
+        value.scale = 1;
+    }
     return ret;
+}
+
+export function toggleVisibility(element, visible) {
+    element.style.visibility = visible ? 'visible' : 'hidden';
+    element.style.pointerEvents = visible ? 'auto' : 'none';
 }
 
 

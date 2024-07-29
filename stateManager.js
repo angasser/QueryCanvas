@@ -1,8 +1,7 @@
 import { ExpressionLocation, TaskExpressionState, TaskState, ViewportState, hoverType, interactionType, shapeType, toolType } from './structs.js';
-import { areIterablesEqual, deserializeTaskExpression, getAllOccurrences, getColor, getFragmentsFromShapes, getQueriesFromShapes, getRandomId, getShapesFromFragments, getShapesFromQuery, isSubset, numberToLetter, serializeTaskExpression, setElementInteraction, toInt, toShapes } from './util.js';
-import { updateUi } from './uiDisplay.js';
-import { updateViewport, findEmpySpace } from './viewport.js';
-import { charsSinceLastBreak, convertExpToString, convertVennToString } from './codeDisplay.js';
+import { deserializeTaskExpression, getColor, getFragmentsFromShapes, getQueriesFromShapes, getRandomId, getShapesFromFragments, getShapesFromQuery, isSubset, numberToLetter, setElementInteraction, toInt, toShapes } from './util.js';
+import { updateUi } from './UI/uiDisplay.js';
+import { updateViewport, findEmpySpace } from './viewport/viewport.js';
 
 export function updateAll(state, uiDelayable = false, viewportRecalculate = true) {
     updateViewport(state.viewport, state, viewportRecalculate);
@@ -400,4 +399,6 @@ export function redoState(state) {
     updateAll(state);
 }
 
-
+export function setTabWidth(tab, width) {
+    tab.style.width = width + "px";
+}

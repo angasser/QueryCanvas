@@ -1,4 +1,4 @@
-import { toolType } from "./structs.js";
+import { toolType } from "../structs.js";
 import { toggleTabList } from "./uiDisplay.js";
 
 
@@ -11,7 +11,7 @@ export function updateHelpTab(state, uiDisplay) {
     }
 
     toggleTabList(uiDisplay.helpTab, true);
-
+    
     if(uiDisplay.helpTab.childElementCount > 0) return;
     const helpContent = document.createElement('div');
     helpContent.style.padding = '32px';

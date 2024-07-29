@@ -1,10 +1,10 @@
 import { resetTask } from "./menuTab.js";
 import { getActivesAndInactives, getQueryType, textQueryType } from "./resultTab.js";
-import { setHoverFromFragments, switchExpression, switchTask, updateAll } from "./stateManager.js";
-import { ExpressionLocation, hoverType, modifyMode, toolType } from "./structs.js";
+import { switchExpression } from "../stateManager.js";
+import { ExpressionLocation, modifyMode, toolType } from "../structs.js";
 import { toggleTabList } from "./uiDisplay.js";
-import { areSetsEqual, getFragmentsFromShapes, getShapesFromQuery, isSubset, itemTextButton, toInt, toShapes } from "./util.js";
-import { getAllOverlapping } from "./viewport.js";
+import { getFragmentsFromShapes, getShapesFromQuery, isSubset, itemTextButton, toInt, toShapes } from "../util.js";
+import { getAllOverlapping } from "../viewport/viewport.js";
 
 const LINE_BREAK_LENGTH = 64;
 
@@ -93,6 +93,8 @@ export function updateCodeTab(state, codeDisplay) {
     if (!codeDisplay.editor) {
         return;
     }
+
+
     const task = state.activeTask;
     codeDisplay.codeTitle.innerHTML = task.title;
     codeDisplay.taskDescription.innerHTML = task.taskDesc.replace(/\n/g, '<br>');;
@@ -134,10 +136,34 @@ export function updateCodeTab(state, codeDisplay) {
 
         task.codeString = content;
         const iLoc = sp.pre.length + vars.length + sp.mid.length;
-        exp.loc = new ExpressionLocation(exp.id, iLoc, iLoc + expObj.main.content.length);
+        const iNewMax = iLoc + expObj.main.content.length;
+        const iDelta = iNewMax - exp.loc.max;
+        exp.loc = new ExpressionLocation(exp.id, iLoc, iNewMax);
 
         const vLoc = sp.pre.length;
-        exp.varLoc = new ExpressionLocation(exp.id, vLoc, vLoc + vars.length);
+        const vNewMax = vLoc + vars.length;
+        const vDelta = vNewMax - exp.varLoc.max;
+        exp.varLoc = new ExpressionLocation(exp.id, vLoc, vNewMax);
+
+        for(const [k, v] of state.activeTask.expressions.entries()) {
+            if(exp.id === k)
+                continue;
+
+
+            if (v.varLoc.min >= exp.varLoc.max && v.varLoc.max < exp.loc.min) {
+                v.varLoc = new ExpressionLocation(v.varLoc.expId, v.varLoc.min + vDelta, v.varLoc.max + vDelta);
+            }
+            else if (v.varLoc.min >= exp.loc.max){
+                v.varLoc = new ExpressionLocation(v.varLoc.expId, v.varLoc.min + iDelta, v.varLoc.max + iDelta);
+            }
+
+            if(v.loc.min >= exp.varLoc.max && v.loc.max < exp.loc.min){
+                v.loc = new ExpressionLocation(v.loc.expId, v.loc.min + vDelta, v.loc.max + vDelta);
+            }
+            else if (v.loc.min >= exp.loc.max){
+                v.loc = new ExpressionLocation(v.loc.expId, v.loc.min + iDelta, v.loc.max + iDelta);
+            }
+        }
     }
     else
         codeDisplay.editor.setValue(content);
@@ -171,6 +197,9 @@ function addQueryDecorator(state, codeDisplay, content, exp){
 
     codeDisplay.glyphDisposables.push(codeDisplay.editor.onMouseDown(function (e) {
         if (e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+            const lineNumber = e.target.position.lineNumber;
+            if (lineNumber !== pos.line + 1)
+                return;
             if (isActive) {
                 switchExpression(state, null);
             }
@@ -224,10 +253,11 @@ function setHighlight(codeDisplay, content, midOj, split, vars) {
         }
     }
 
+    const merge = pre + vars + split.mid;
     const queryStartInfo = {
         index: pre.length + vars.length + split.mid.length,
-        line: ((pre + vars + split.mid).match(/\n/g) || []).length,
-        char: charsSinceLastBreak(split.mid),
+        line: (merge.match(/\n/g) || []).length,
+        char: charsSinceLastBreak(merge),
     }
 
     const posInfo = {
@@ -242,8 +272,8 @@ function setHighlight(codeDisplay, content, midOj, split, vars) {
         makeExpSelectionDecorator(highlights, new monaco.Range(
             varStartInfo.line + 1,
             varStartInfo.char + 1,
-            varPosInfo.line + 1,
-            charsSinceLastBreak(content.substr(0, varStartInfo.index + vars.length - 1)) + 1
+            varPosInfo.line,
+            999 //charsSinceLastBreak(content.substr(0, varStartInfo.index + vars.length - 1)) + 1
         ));
     }
 
@@ -277,17 +307,19 @@ function makeHighlightDecorator(decorators, range) {
 }
 
 function addHilight(codeDisplay, highlightList, highlightMap, content, posInfo) {
-    const keyShift = posInfo.index;
-    for (const [key, value] of highlightMap.entries()) {
+    const startIndex = posInfo.index;
+    const sortedEntries = Array.from(highlightMap.entries()).sort((a, b) => a[0] - b[0]);
+
+    for (const [key, value] of sortedEntries) {
         if (key < 0)
             continue;
 
-        while (posInfo.index < key + keyShift) {
-            posInfo.char++;
+        while (posInfo.index < key + startIndex) {
             if (content[posInfo.index] === '\n') {
                 posInfo.line++;
-                posInfo.char = 0;
+                posInfo.char = -1;
             }
+            posInfo.char++;
             posInfo.index++;
         }
 
@@ -299,28 +331,23 @@ function addHilight(codeDisplay, highlightList, highlightMap, content, posInfo) 
                 posInfo.char + value.content.length + 1
             ));
         }
-
-        codeDisplay.codeHighlight.push({
-            startPos: { line: posInfo.line, ch: posInfo.char },
-            endPos: { line: posInfo.line, ch: posInfo.char + value.content.length },
-            fragments: value.fragments,
-        })
     }
 }
 
 export function convertExpToString(state, exp) {
     let indent = 0;
-    let i = exp.varLoc.max;
-    while (i < exp.loc.min) {
+    let i = exp.varLoc.min;
+    while (i >= 0) {
+        i--;
         if(state.activeTask.codeString[i] === '\t')
             indent++;
         if(state.activeTask.codeString[i] === ' '){
-            if ((i - exp.varLoc.max) % 4 == 0)
+            if ((i + 1 + exp.varLoc.min) % 4 == 0)
                 indent++;
-            i++;
         }
         else break;
     }
+    
     const main = convertVennToString(state, exp.viewportStates.get(0), indent);
 
     const vars = [];
@@ -382,9 +409,19 @@ export function convertVennToString(state, viewport, ind) {
         content = "True";
 
     if (viewport.id !== 0) {
-        const pre =  nameToCode(viewport.name) + " = ";
+        const name = nameToCode(viewport.name);
+        const pre =  name + " = ";
         content = pre + content;
         shiftHighlight(hilightMap, pre.length);
+        hilightMap.set(0, {
+            content: name,
+            substr: [],
+            addParentecies: false,
+            isHovered: state.activeExpression.hoveredQueries.has(-viewport.id) || state.isActiveView(viewport.id),
+            fragments: () => {
+                return new Set([toInt([-viewport.id])]);
+            }
+        })
     }
 
     return {

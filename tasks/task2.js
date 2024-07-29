@@ -3,8 +3,8 @@ import { createTask } from "../stateManager.js";
 const code =
 `
 def raincoat_required(is_raining, is_cold, has_umbrella, is_windy):
-	# Edit this function
-[Q1v]   return [Q1]
+    # Edit this function
+    [Q1v]return [Q1]
 `;
 
 const description = 

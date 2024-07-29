@@ -1,8 +1,8 @@
-import { setHoverFromFragments, setHoverFromShapes, updateAll } from "./stateManager.js";
-import { fragmentIterator, hoverType, interactionType, toolType } from "./structs.js";
+import { setHoverFromFragments, updateAll } from "../stateManager.js";
+import { hoverType, interactionType, toolType } from "../structs.js";
 import { getQueryCircle, toggleTabList } from "./uiDisplay.js";
-import { areSetsEqual, getFragmentsFromShapes, getQueriesFromShapes, isIntSubset, isSubset, setElementInteraction, toInt, toShapes } from "./util.js";
-import { getAllOverlapping } from "./viewport.js";
+import { areSetsEqual, getFragmentsFromShapes, isIntSubset, isSubset, setElementInteraction, toInt, toShapes } from "../util.js";
+import { getAllOverlapping } from "../viewport/viewport.js";
 
 export const textQueryType = Object.freeze({
     Normal: 0,
@@ -45,7 +45,7 @@ export function updateResultTab(state, uiDisplay) {
         toggleTabList(uiDisplay.resultTab, false);
         return;
     }
-
+    
     const viewport = state.activeExpression.activeView;
     if (viewport.fragments.size === 0 || state.selectedToolTab !== toolType.result) {
         toggleTabList(uiDisplay.resultTab, false);

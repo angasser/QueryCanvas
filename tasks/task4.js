@@ -13,7 +13,7 @@ def get_dual_athletes(athletes):
     ret = []
     for athlete in athletes:
         # Edit this condition
-[Q1v]        if [Q1]:
+        [Q1v]if [Q1]:
             ret.append(athlete)
     
     return ret 

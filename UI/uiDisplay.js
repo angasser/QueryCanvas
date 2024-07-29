@@ -1,11 +1,12 @@
-import { itemButton, getShapesFromQuery, setElementInteraction, itemTextButton, areSetsEqual, numberToLetter, darkColor, hexToRgb, getShapesInBox } from './util.js';
-import { createNewQuery, removeQuery, createNewShape, removeShape, addNewViewport, switchViewport, removeViewport, updateViewportName, updateAll, setHoverFromShapes, createViewportFromShapes, switchExpression, undoState, redoState, saveState } from './stateManager.js';
-import { interactionType, shapeType, hoverType, toToolType, toolType, modifyMode } from './structs.js';
+import { itemButton, getShapesFromQuery, setElementInteraction, itemTextButton, areSetsEqual, numberToLetter, darkColor, hexToRgb, getShapesInBox } from '../util.js';
+import { createNewQuery, removeQuery, createNewShape, removeShape, addNewViewport, switchViewport, removeViewport, updateViewportName, updateAll, setHoverFromShapes, createViewportFromShapes, switchExpression, undoState, redoState, saveState } from '../stateManager.js';
+import { interactionType, shapeType, hoverType, toToolType, toolType, modifyMode } from '../structs.js';
 import { updateResultTab } from './resultTab.js';
-import { updateViewport } from './viewport.js';
+import { updateViewport } from '../viewport/viewport.js';
 import { updateCodeTab } from './codeDisplay.js';
 import { updateHelpTab } from './helpTab.js';
 import { updateMenuTab } from './menuTab.js';
+import { setTabWidth } from '../stateManager.js';
 
 export class UIDisplay {
     constructor() {
@@ -15,6 +16,7 @@ export class UIDisplay {
         this.menuTab = document.querySelector('#menuTab');
         this.titleList = document.querySelector('#titleList');
 
+        this.tabResizer = document.querySelector('#tabResizer');
         this.menuButton = document.querySelector('#menuButton');
         this.helpButton = document.querySelector('#helpButton');
         this.undoButton = document.querySelector('#undoButton');    
@@ -40,6 +42,7 @@ export class UIDisplay {
         this.queryTagRef = document.querySelector('#queryTags');
         this.boundingBoxRef = document.querySelector('#boundingBox');
 
+        this.resizeStart = null;
 
         this.isDirty = false;
     }
@@ -110,6 +113,33 @@ export function initializeUiInput(uiDisplay, state) {
     });
 
     // tool bar
+    const bound = uiDisplay.toolBar.getBoundingClientRect();
+    state.tabWidth = bound.width - 4;
+    const resStyle = uiDisplay.tabResizer.style;
+    resStyle.top = (bound.bottom + 8) + "px";
+
+    uiDisplay.tabResizer.addEventListener('mousedown', (event) => {
+        uiDisplay.resizeStart = event.clientX;
+    });
+    
+    document.addEventListener('mousemove', (event) => {
+        if (uiDisplay.resizeStart === null)
+            return;
+        
+        const delta = event.clientX - uiDisplay.resizeStart;
+        let newTabWidth = state.tabWidth + delta;
+        
+        newTabWidth = Math.max(100, Math.min(newTabWidth, window.innerWidth - 100));
+        
+        state.tabWidth = newTabWidth;
+        uiDisplay.resizeStart = event.clientX;
+        updateTabWidth(state);
+    });
+
+    document.addEventListener('mouseup', (event) => {
+        uiDisplay.resizeStart = null;
+    });
+
     for (let i = 0; i < uiDisplay.toolSelectButtons.length; i++) {
         const button = uiDisplay.toolSelectButtons[i];
 
@@ -245,6 +275,8 @@ export function updateToolBar(uiDisplay, state) {
         }
     }
 
+    toggleVisiblity(uiDisplay.tabResizer, state.selectedToolTab === toolType.code || state.selectedToolTab === toolType.result || state.selectedToolTab === toolType.help);
+    
     setElementInteraction(uiDisplay.undoButton, state.undoStack.length > 1 ? interactionType.None : interactionType.Disabled);
     setElementInteraction(uiDisplay.redoButton, state.redoStack.length > 0 ? interactionType.None : interactionType.Disabled);
 
@@ -252,6 +284,8 @@ export function updateToolBar(uiDisplay, state) {
     updateHelpTab(state, uiDisplay);
     updateCodeTab(state, state.codeDisplay);
     updateMenuTab(state, uiDisplay);
+
+    updateTabWidth(state);
 }
 
 function updateTitleBar(uiDisplay, state) {
@@ -699,6 +733,17 @@ export function getQueryCircle(state, queryId, size=48) {
     `;
 }
 
+function updateTabWidth(state) {
+    setTabWidth(state.uiDisplay.helpTab, state.tabWidth);
+    setTabWidth(state.uiDisplay.resultTab, state.tabWidth);
+    setTabWidth(state.codeDisplay.codeTab, state.tabWidth);
+
+    state.uiDisplay.tabResizer.style.left = (state.tabWidth - 16) + "px";
+
+    if(state.codeDisplay.editor)
+        state.codeDisplay.editor.layout();
+}
+
 export function drawCanvasQueryCircle(c, query, pos, scale) {
     const isVariable = query.id <= 0;
     const queryText = isVariable ? numberToLetter(-query.id) : query.id;
@@ -727,6 +772,8 @@ export function drawCanvasQueryCircle(c, query, pos, scale) {
         c.stroke();
 
     }
+
+    c.textAlign = 'center';
     c.font = '32px Helvetica';
     c.fillStyle = 'white';
     c.fillText(queryText, pos.x, pos.y + 10);

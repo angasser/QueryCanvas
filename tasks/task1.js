@@ -3,8 +3,8 @@ import { createTask } from "../stateManager.js";
 const code =
 `
 def correct_conclusion(player1_win, player2_win, timeout_occured, game_canceled):
-	# Edit this function
-[Q1v]   return [Q1]
+    # Edit this function
+    [Q1v]return [Q1]
 `;
 
 const description = 

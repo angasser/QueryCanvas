@@ -1,10 +1,10 @@
-import { getShapesUnderPoint, inverseTransformPoint, transformPoint, updateViewport } from './viewport.js';
-import { initializeUiInput } from './uiDisplay.js';
+import { getShapesUnderPoint, inverseTransformPoint } from './viewport/viewport.js';
+import { initializeUiInput } from './UI/uiDisplay.js';
 import { areSetsEqual, getQueriesFromShapes, getShapeBoundingBox, getShapesInBox, toInt } from './util.js';
 import { saveState, setHoverFromFragments, setHoverFromShapes, switchViewport, toggleInactiveFragment, updateAll } from './stateManager.js';
-import { updateBoxHover, updateQueryTags } from './uiQueryTags.js';
+import { updateBoxHover, updateQueryTags } from './viewport/uiQueryTags.js';
 import { hoverType } from './structs.js';
-import { initialzeCodeInput } from './codeDisplay.js';
+import { initialzeCodeInput } from './UI/codeDisplay.js';
 
 export class InputHandler {
     constructor(state) {

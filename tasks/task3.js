@@ -12,7 +12,7 @@ class Student:
 
     def is_eligible(self):
         # Change this function
-[Q1v]        return [Q1]
+        [Q1v]return [Q1]
 
 def get_eligible_students(students):
     return [student for student in students if student.is_eligible()]

@@ -25,11 +25,11 @@ main_loop(state):
     apply_ghost_movement(state)
     
     does_overlap_ghost = check_overlaps(state)
-[Q2v]    if [Q2]:
+    [Q2v]if [Q2]:
         state.has_succeeded = True
     
     # The game ends (success or fail)
-[Q1v]    if [Q1]:
+    [Q1v]if [Q1]:
         state.is_finished = True
         finish_game(state)
         return

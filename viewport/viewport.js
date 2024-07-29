@@ -1,8 +1,7 @@
 import { drawBackground, initBackgroundPattern } from "./viewportBackground.js";
-import { areIterablesEqual, areSetsEqual, colorLerp, drawFragment, getShapePoints, hexToRgb, rgbToString, toInt, toShapes } from "./util.js";
-import { shapeType, fragmentIterator, hoverType } from "./structs.js";
+import { colorLerp, drawFragment, getShapePoints, hexToRgb, toInt, toShapes } from "../util.js";
+import { shapeType, fragmentIterator, hoverType } from "../structs.js";
 import { updateQueryTags } from "./uiQueryTags.js";
-import { isInactiveFragment } from "./stateManager.js";
 import { intersect } from "./intersectPolygon.js";
 
 

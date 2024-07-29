@@ -53,7 +53,7 @@
             top: 0; 
             left: 0; 
             width: calc(40% - 10px);
-            z-index: 1000; 
+            z-index: 100; 
             margin: 5px;
         }
 
@@ -306,6 +306,9 @@
         </button>
         <div class="listTab" id="queryList">
         </div>
+    </div>
+    <div id="tabResizer" class="iconButton" style="position: absolute; z-index: 10000;" title="Resize window">
+        <img class="iconStyle" src="./svgs/icons8-double-arrow-100.png" draggable="false"/>
     </div>
     <div id="toolTab">
         <div id="toolBar" class="topButton" style="display: flex; filter: none; cursor: default; gap: 2px">

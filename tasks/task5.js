@@ -18,11 +18,11 @@ is_finished = False
     next_head_cell = get_next_cell(current_head_cell)
     
     is_in_bounds = check_bounds(next_head_cell.position)
-[Q1v]    if [Q1]:
+    [Q1v]if [Q1]:
         is_finished = True
         continue
     
-[Q2v]    if [Q2]:
+    [Q2v]if [Q2]:
         eat_fruit()
         
     apply_movement()

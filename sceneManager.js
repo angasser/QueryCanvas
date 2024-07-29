@@ -1,10 +1,10 @@
-import { Viewport, updateViewport } from "./viewport.js";
-import { GameState, shapeType } from "./structs.js";
+import { Viewport } from "./viewport/viewport.js";
+import { GameState } from "./structs.js";
 import { InputHandler } from "./input.js";
-import { UIDisplay,  } from "./uiDisplay.js";
+import { UIDisplay } from "./UI/uiDisplay.js";
 import { updateAll } from "./stateManager.js";
-import { CodeDisplay } from "./codeDisplay.js";
-import { initializeTasks } from "./menuTab.js";
+import { CodeDisplay } from "./UI/codeDisplay.js";
+import { initializeTasks } from "./UI/menuTab.js";
 
 
 const viewport = new Viewport();
