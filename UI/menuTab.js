@@ -33,7 +33,7 @@ export function resetTask(state, taskTitle) {
         return;
     }
     for (const task of tasks) {
-        const t = task.apply(state);
+        const t = task(state);
         if (t.title === taskTitle) {
             state.tasks.set(t.title, t);
         }

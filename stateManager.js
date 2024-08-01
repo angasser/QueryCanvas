@@ -2,7 +2,7 @@ import { ExpressionLocation, TaskExpressionState, TaskState, ViewportState, hove
 import { deserializeTaskExpression, getColor, getFragmentsFromShapes, getQueriesFromShapes, getRandomId, getShapesFromFragments, getShapesFromQuery, isSubset, numberToLetter, serializeTaskExpression, setElementInteraction, toInt, toShapes } from './util.js';
 import { updateUi } from './UI/uiDisplay.js';
 import { updateViewport, findEmpySpace } from './viewport/viewport.js';
-import { checkTutorialPageFinished } from './UI/tutorial.js';
+import { checkTutorialPageFinished, updateTutorialPage } from './UI/tutorial.js';
 import { convertExpToString, convertVennToString } from './UI/codeDisplay.js';
 
 export function updateAll(state, uiDelayable = false, viewportRecalculate = true) {
@@ -337,8 +337,10 @@ export function createTask(state, title, taskDesc, queryDesc, codeDesc, codeStri
     }
 
     if (title === "Tutorial") {
+        console.log(state);
         state.tutorial.currentPage = 0;
         state.tutorial.unlockedPages = 0;
+        updateTutorialPage(state.tutorial);
     }
 
     const task = new TaskState(title, taskDesc, queryDesc, codeDesc, codeString, expressions);
