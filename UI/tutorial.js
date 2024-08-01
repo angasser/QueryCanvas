@@ -176,7 +176,8 @@ export class Tutorial {
                 title: "Add query",
                 content: `
                     <div>
-                        If the shapes don't overlap, it semantically represents an 'or' operation: "(Mozzarella and not pineapple) or tomato."
+                        If the shapes don't overlap, it semantically represents an 'or' operation: <br>
+                        "(Mozzarella and not pineapple) or tomato."
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_sepShapes.png">`,
                 isFinished: null,
@@ -190,7 +191,7 @@ export class Tutorial {
                 title: "Second Exercise",
                 content: `
                     <div>
-                        We’re already halfway there! Quite easy, right?<br> Let's move to the second example in the editor.
+                        We're already halfway there! Quite easy, right?<br> Let's move to the second example in the editor.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_exp2.png">`,
                 isFinished: (state) => state.hasExp() && state.activeExpression.queries.size === 7,
@@ -209,7 +210,7 @@ export class Tutorial {
                 title: "Shapes",
                 content: `
                     <div>
-                        In the Query tab, you'll find an overview of all the queries.<br> First, display all shapes related to "mozzarella" by clicking on the arrow.
+                        Great! In the Query tab, you'll find an overview of all the queries.<br> First, display all shapes related to "mozzarella" by clicking on the arrow.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_togShape.png">`,
                 isFinished: (state) => {
@@ -222,7 +223,7 @@ export class Tutorial {
                 title: "Shapes",
                 content: `Now you can see all shapes associated with the query "mozzarella".<br> 
                 Keep in mind that a query can have multiple shapes.<br>
-                You can also add new shapes by clicking the '+' icon next to each query.`,
+                You could also add new shapes by clicking the '+' icon next to each query.`,
                 isFinished: null
             },
             {
