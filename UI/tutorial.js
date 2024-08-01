@@ -2,8 +2,8 @@ import { toolType } from "../structs.js";
 
 export class Tutorial {
     constructor() {
-        this.currentPage = 99;
-        this.unlockedPages = 99;
+        this.currentPage = 0;
+        this.unlockedPages = 0;
 
         this.parent = document.querySelector('#tutorialTab');
         this.title = document.querySelector('#tutorialTitle');

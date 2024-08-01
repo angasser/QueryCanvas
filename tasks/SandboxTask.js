@@ -22,7 +22,6 @@ const codeDescription =
     ``;
 
 export function taskSandbox(state) {
-    
     const task = createTask(state, "Sandbox", description, queryDescription, codeDescription, code, new Map([
         ["Q1", {
             varString: "",

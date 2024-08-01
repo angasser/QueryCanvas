@@ -13,7 +13,7 @@ import { toggleTabList } from "./uiDisplay.js";
 const tasks = [taskSandbox, taskTutorial, task1, task2, task3, task4, task5, task6];
 export function initializeTasks(state) {
     for (const task of tasks) {
-        const t = task.apply(state);
+        const t = task(state);
         state.tasks.set(t.title, t);
     }
 
