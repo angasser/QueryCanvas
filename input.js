@@ -97,7 +97,7 @@ function initializeInput(handler, canvas) {
 
         // Calculate the new scale
         let newScale = zoomIn ? view.scale * (1 + scaleFactor) : view.scale / (1 + scaleFactor);
-        newScale = Math.max(0.6, Math.min(3, newScale));
+        newScale = Math.max(0.7, Math.min(2, newScale));
 
         const size = {x: window.innerWidth, y: window.innerHeight};
         const factor = (1 - (newScale / view.scale));

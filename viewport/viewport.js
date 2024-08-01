@@ -127,8 +127,9 @@ export function inverseTransformPoint(view, point) {
 }
 
 export function findEmpySpace(state, radius) {
-    let xc = window.innerWidth / 2;
-    let yc = window.innerHeight / 2;
+    const t = inverseTransformPoint(state.activeExpression.activeView, { x: window.innerWidth / 2, y: window.innerHeight / 2 });
+    let xc = t.x;;
+    let yc = t.y;
 
     for (let i = 0; i < 100; i++) {
         for (let x = -i; x <= i; x ++) {

@@ -1,7 +1,9 @@
 import { ExpressionLocation, TaskExpressionState, TaskState, ViewportState, hoverType, interactionType, shapeType, toolType } from './structs.js';
-import { deserializeTaskExpression, getColor, getFragmentsFromShapes, getQueriesFromShapes, getRandomId, getShapesFromFragments, getShapesFromQuery, isSubset, numberToLetter, setElementInteraction, toInt, toShapes } from './util.js';
+import { deserializeTaskExpression, getColor, getFragmentsFromShapes, getQueriesFromShapes, getRandomId, getShapesFromFragments, getShapesFromQuery, isSubset, numberToLetter, serializeTaskExpression, setElementInteraction, toInt, toShapes } from './util.js';
 import { updateUi } from './UI/uiDisplay.js';
 import { updateViewport, findEmpySpace } from './viewport/viewport.js';
+import { checkTutorialPageFinished } from './UI/tutorial.js';
+import { convertExpToString, convertVennToString } from './UI/codeDisplay.js';
 
 export function updateAll(state, uiDelayable = false, viewportRecalculate = true) {
     updateViewport(state.viewport, state, viewportRecalculate);
@@ -11,6 +13,13 @@ export function updateAll(state, uiDelayable = false, viewportRecalculate = true
     else {
         updateUi(state.uiDisplay, state);
     }
+
+    checkTutorialPageFinished(state, state.tutorial);
+    // if (state.activeExpression !== null) {
+    //     console.log(state.activeExpression);
+    //     console.log(serializeTaskExpression(state.activeExpression));
+    //     console.log(convertExpToString(state, state.activeExpression));
+    // }
 }
 
 export function createNewQuery(state, expression, idOverride = null, addShape = true, shouldSave = true) {
@@ -327,7 +336,13 @@ export function createTask(state, title, taskDesc, queryDesc, codeDesc, codeStri
         expressions.set(id, exp);
     }
 
-    return new TaskState(title, taskDesc, queryDesc, codeDesc, codeString, expressions);
+    if (title === "Tutorial") {
+        state.tutorial.currentPage = 0;
+        state.tutorial.unlockedPages = 0;
+    }
+
+    const task = new TaskState(title, taskDesc, queryDesc, codeDesc, codeString, expressions);
+    return task;
 }
 
 export function switchTask(state, taskTitle) {
@@ -340,9 +355,16 @@ export function switchTask(state, taskTitle) {
     state.activeTask = state.tasks.get(taskTitle);
     state.activeExpression = state.activeTask.activeExpression;
 
-    state.selectedToolTab = state.activeTask.codeString !== "" ? toolType.code : toolType.result;
+    state.selectedToolTab = taskTitle === "Tutorial" ? toolType.none :
+        state.activeTask.codeString !== "" ? toolType.code : toolType.result;
+
+
     saveState(state, "Switched to task " + taskTitle);
-    updateAll(state);
+    if(state.activeExpression === null && taskTitle !== "Tutorial"){
+        switchExpression(state, state.activeTask.expressions.values().next().value);
+    }
+    else
+        updateAll(state);
 }
 
 export function switchExpression(state, expression) {
@@ -370,6 +392,14 @@ export function saveState(state, tooltip) {
     setElementInteraction(state.uiDisplay.undoButton, state.undoStack.length > 1 ? interactionType.None : interactionType.Disabled);
     setElementInteraction(state.uiDisplay.redoButton, state.redoStack.length > 0 ? interactionType.None : interactionType.Disabled);
 }
+
+export function overwriteState(state, tooltip) {
+    if (state.undoStack.length > 1) {
+        state.undoStack.pop();
+    }    
+    saveState(state, tooltip);
+}
+
 
 export function undoState(state) {
     if (state.undoStack.length <= 1)

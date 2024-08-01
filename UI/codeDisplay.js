@@ -1,9 +1,9 @@
 import { resetTask } from "./menuTab.js";
 import { getActivesAndInactives, getQueryType, textQueryType } from "./resultTab.js";
-import { switchExpression } from "../stateManager.js";
+import { saveState, overwriteState, switchExpression, setHoverFromFragments, updateAll } from "../stateManager.js";
 import { ExpressionLocation, modifyMode, toolType } from "../structs.js";
 import { toggleTabList } from "./uiDisplay.js";
-import { getFragmentsFromShapes, getShapesFromQuery, isSubset, itemTextButton, toInt, toShapes } from "../util.js";
+import { areSetsEqual, getFragmentsFromShapes, getShapesFromQuery, isSubset, itemTextButton, toInt, toShapes } from "../util.js";
 import { getAllOverlapping } from "../viewport/viewport.js";
 
 const LINE_BREAK_LENGTH = 64;
@@ -26,6 +26,17 @@ export class CodeDisplay{
 
 export function initialzeCodeInput(state, codeDisplay) {
     const codeTitleWrap = document.getElementById("codeTitleWrap");
+    let wordIcon;
+    codeTitleWrap.appendChild(itemTextButton("./svgs/icons8-checkOff-100.png", "Word wrap", 32,
+        () => {
+            state.wordWrap = !state.wordWrap;
+            codeDisplay.editor.updateOptions({ wordWrap: state.wordWrap });
+            wordIcon.src = state.wordWrap ? "./svgs/icons8-check-100.png" : "./svgs/icons8-checkOff-100.png";
+
+        }, "Whether the editor should auto wrap the lines."
+    ));
+    wordIcon = codeTitleWrap.lastChild.children[0];
+
     codeTitleWrap.appendChild(itemTextButton("./svgs/icons8-reset-100.png", "Reset", 32,
         () => {
             const isConfirmed = confirm("Do you want to reset this task? All progress will be lost.");
@@ -58,7 +69,7 @@ export function initialzeCodeInput(state, codeDisplay) {
                 verticalScrollbarSize: 0, 
                 horizontalScrollbarSize: 10,
             },
-            // wordWrap: 'on',
+            wordWrap: state.wordWrap
         });
 
 
@@ -67,19 +78,71 @@ export function initialzeCodeInput(state, codeDisplay) {
         });
 
         codeDisplay.editor.onDidChangeModelContent((e) => {
-            if (state.modifyMode === modifyMode.CodeOnly) {
-                const currentContent = codeDisplay.editor.getValue();
-                state.activeTask.codeString = currentContent;
-            }
-
             const contentHeight = codeDisplay.editor.getContentHeight();
             codeDisplay.editor.getDomNode().style.height = `${contentHeight}px`;
             codeDisplay.editor.layout();
         });
 
+        codeDisplay.editor.onMouseMove((e) => {
+            const position = e.target.position;
+            if (!position || state.modifyMode === modifyMode.CodeOnly || !state.hasExp()) 
+                return;
+
+            const { lineNumber, column } = position;
+            for(const highlight of codeDisplay.codeHighlight) {
+                if (lineNumber < highlight.range.startLineNumber || lineNumber > highlight.range.endLineNumber)
+                    continue;
+
+                if (lineNumber === highlight.range.startLineNumber && column < highlight.range.startColumn)
+                    continue;
+
+                if (lineNumber === highlight.range.endLineNumber && column > highlight.range.endColumn)
+                    continue;
+
+                const frag = highlight.value();
+                if (areSetsEqual(state.activeExpression.hoveredFragments, frag))
+                    return;
+                setHoverFromFragments(state, frag);
+                updateAll(state);
+            }
+        });
+
 
         updateCodeTab(state, codeDisplay);
     });
+}
+
+function addEditorListeners(state, codeDisplay){
+    codeDisplay.editListener = codeDisplay.editor.onDidChangeModelContent((e) => {
+        if (state.modifyMode === modifyMode.CodeOnly) {
+            const currentContent = codeDisplay.editor.getValue();
+            state.activeTask.codeString = currentContent;
+
+            state.activeTask.codeChangeCount++;
+            if(state.activeTask.codeChangeCount % 8 === 0){
+                saveState(state, "Edited code");
+            }
+            else{
+                overwriteState(state, "Edited code");
+            }
+        }
+    });
+
+    codeDisplay.onCaret = codeDisplay.editor.onDidChangeCursorPosition((e) => {
+        updateCaret(state, codeDisplay, e.position);
+    });
+}
+
+function removeEditorListeners(codeDisplay){
+    if(codeDisplay.editListener){
+        codeDisplay.editListener.dispose();
+        codeDisplay.editListener = null;
+    }
+
+    if (codeDisplay.onCaret) {
+        codeDisplay.onCaret.dispose();
+        codeDisplay.onCaret = null;
+    }
 }
 
 export function updateCodeTab(state, codeDisplay) {
@@ -108,10 +171,7 @@ export function updateCodeTab(state, codeDisplay) {
 
     codeDisplay.editor.updateOptions({ readOnly: state.modifyMode === modifyMode.QueryOnly });
     const position = codeDisplay.editor.getPosition();
-    if (codeDisplay.onCaret) {
-        codeDisplay.onCaret.dispose();
-        codeDisplay.onCaret = null;
-    }
+    removeEditorListeners(codeDisplay);
 
     let content = task.codeString;
     if (state.modifyMode !== modifyMode.CodeOnly && state.hasExp()) {
@@ -163,6 +223,8 @@ export function updateCodeTab(state, codeDisplay) {
             else if (v.loc.min >= exp.loc.max){
                 v.loc = new ExpressionLocation(v.loc.expId, v.loc.min + iDelta, v.loc.max + iDelta);
             }
+
+
         }
     }
     else
@@ -170,9 +232,8 @@ export function updateCodeTab(state, codeDisplay) {
 
     codeDisplay.editor.setPosition(position);
 
-    codeDisplay.onCaret = codeDisplay.editor.onDidChangeCursorPosition((e) => {
-        updateCaret(state, codeDisplay, e.position);
-    });
+    addEditorListeners(state, codeDisplay);
+    
 
     if (state.modifyMode !== modifyMode.CodeOnly) {
         for (const exp of task.expressions.values()) {
@@ -244,7 +305,7 @@ function setHighlight(codeDisplay, content, midOj, split, vars) {
 
     for (const v of midOj.vars) {
         const oldI = varPosInfo.index;
-        addHilight(codeDisplay, highlights, v.hilightMap, content, varPosInfo);
+        addHilight(codeDisplay, highlights, v, content, varPosInfo);
         const i =  oldI + v.content.length;
         varPosInfo = {
             index: i,
@@ -266,7 +327,7 @@ function setHighlight(codeDisplay, content, midOj, split, vars) {
         char: queryStartInfo.char,
     }
 
-    addHilight(codeDisplay, highlights, midOj.main.hilightMap, content, posInfo);    
+    addHilight(codeDisplay, highlights, midOj.main, content, posInfo);    
 
     if (vars.length > 0) {
         makeExpSelectionDecorator(highlights, new monaco.Range(
@@ -306,7 +367,8 @@ function makeHighlightDecorator(decorators, range) {
     });
 }
 
-function addHilight(codeDisplay, highlightList, highlightMap, content, posInfo) {
+function addHilight(codeDisplay, highlightList, view, content, posInfo) {
+    const highlightMap = view.hilightMap;
     const startIndex = posInfo.index;
     const sortedEntries = Array.from(highlightMap.entries()).sort((a, b) => a[0] - b[0]);
 
@@ -331,6 +393,16 @@ function addHilight(codeDisplay, highlightList, highlightMap, content, posInfo) 
                 posInfo.char + value.content.length + 1
             ));
         }
+
+        codeDisplay.codeHighlight.push({
+            range: new monaco.Range(
+                posInfo.line + 1,
+                posInfo.char + 1,
+                posInfo.line + 1,
+                posInfo.char + value.content.length + 1
+            ),
+            value: value.fragments,
+        });
     }
 }
 
@@ -396,7 +468,7 @@ export function convertVennToString(state, viewport, ind) {
     let content = "";
     let hilightMap = new Map();
     for (let i = 0; i < strs.length; i++) {
-        content = writeContent(strs, i, ind, content, hilightMap);
+        content = writeContent(state, strs, i, ind, content, hilightMap);
     }
 
     if (content.includes("\n")){
@@ -753,7 +825,7 @@ function normalString(state, view, l, overlapping, expStrs)
 
 
 
-function writeContent(strs, i, indent, mid, hilightMap) {
+function writeContent(state, strs, i, indent, mid, hilightMap) {
     const str = strs[i];
     const paren = strs.length > 1 && str.addParentecies;
 
@@ -768,7 +840,7 @@ function writeContent(strs, i, indent, mid, hilightMap) {
     if (str.substr.length > 0) {
         tStr += "(";
         for (let j = 0; j < str.substr.length; j++) {
-            tStr = writeContent(str.substr, j, indent + 1, tStr, tHilight);
+            tStr = writeContent(state, str.substr, j, indent + 1, tStr, tHilight);
         }
         tStr += ")";
     }
@@ -777,7 +849,7 @@ function writeContent(strs, i, indent, mid, hilightMap) {
         tStr += ")";
     }
     const charCount = charsSinceLastBreak(mid);
-    if (charCount > 16 && charCount + tStr.length > LINE_BREAK_LENGTH) {
+    if (charCount > 16 && charCount + tStr.length > LINE_BREAK_LENGTH && !state.wordWrap) {
         mid += newlineIndent(indent + 1);
     }
     if (i < strs.length - 1) {

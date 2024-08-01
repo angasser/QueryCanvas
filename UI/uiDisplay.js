@@ -245,9 +245,9 @@ function getQueryTabBaseTitle(state) {
 
 function getToolTabBaseTitle(state, tool = null) {
     const t = tool === null ? state.selectedToolTab : tool;
-    return t === toolType.result ? "Result view" :
+    return t === toolType.result ? "Output view" :
         t === toolType.code ? "Code editor" :
-            t === toolType.help ? "Tutorial" :
+            t === toolType.help ? "Help" :
                 t === toolType.menu ? "Menu" :
                     "";
 }

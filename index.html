@@ -48,6 +48,16 @@
             margin: 5px;
         }
 
+        #tutorialTab{
+            position: absolute; 
+            left: 0;
+            bottom: 0;
+            width: calc(40% - 10px);
+            height: 35%;
+            z-index: 1000; 
+            margin: 5px;
+        }
+
         #toolTab{
             position: absolute; 
             top: 0; 
@@ -282,6 +292,20 @@
             border-radius: 32px;
         }
 
+        .tutorialImage{
+            display: flex;
+            flex: 1;
+            width: 90%;
+            height: auto;
+            margin-top: 8px;
+            margin-bottom: 8px;
+
+            border: 2px solid rgb(100, 100, 100);
+            border-radius: 32px;
+            object-fit: contain;
+            max-height: 180px;
+        }
+
         .custom-break {
             height: 128px;
         }
@@ -315,13 +339,13 @@
             <button id="menuButton" class="iconButton"  title="Menu Tab">
                 <img class="iconStyle" src="./svgs/icons8-menu-100.png" />
             </button>
-            <button id="helpButton" class="iconButton"  title="Tutorial">
+            <button id="helpButton" class="iconButton"  title="Help">
                 <img class="iconStyle" src="./svgs/icons8-help-100.png"/>
             </button>
             <button id="codeButton" class="iconButton"  title="Code Tab">
                 <img class="iconStyle" src="./svgs/icons8-code-64.png"/>
             </button>
-            <button id="resultButton" class="iconButton"  title="Result Tab">
+            <button id="resultButton" class="iconButton"  title="Output Tab">
                 <img class="iconStyle" src="./svgs/icons8-result-100.png"/>
             </button>
             <button id="undoButton" class="iconButton"  title="Undo">
@@ -343,8 +367,9 @@
         <div class="listTab" id="codeTab">
             <div id="codeScroll">
                 <div style="margin: 24px; font-size: 24px;">
-                    <div id="codeTitleWrap" style="margin: 24px; font-size: 24px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="margin: 24px; font-size: 24px; display: flex; align-items: center; justify-content: space-between;">
                         <b id="codeTitle"></b>
+                        <div id="codeTitleWrap" style="display: flex; align-items: center; justify-content: space-between; gap: 4px"></div>
                     </div>
                     <div id="taskDescription"></div>
                     <br>
@@ -371,6 +396,25 @@
                 <div id="titleAddButton" class="centerWrap"></div>
             </button>
             <div class="listTab" id="titleList">
+            </div>
+        </div>
+    </div>
+
+    <div id="tutorialTab">
+        <div class="topButton" style="display: flex; filter: none; cursor: default; gap: 8px">
+            <img id="tutorialIcon" class="iconStyle" src="./svgs/icons8-checkOff-100.png" >
+            <b id="tutorialTitle" style="font-size: 24px; flex-grow: 1;">Tutorial</b>
+            <div id="tutorialProgress">19/24</div>
+            <button id="tutorialPrevious" class="iconButton"  title="Previous page">
+                <img class="iconStyle" src="./svgs/icons8-back-100.png"/>
+            </button>
+            <button id="tutorialNext" class="iconButton"  title="Next page">
+                <img class="iconStyle" src="./svgs/icons8-arrow-100.png"/>
+            </button>
+        </div>
+        <div class="listTab" style="bottom: 0">
+            <div id="tutorialContent" style="font-size: 24px; padding: 16px;">
+                Hello, World!
             </div>
         </div>
     </div>

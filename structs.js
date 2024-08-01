@@ -42,13 +42,15 @@ export const interactionType = Object.freeze({
 });
 
 export class GameState{
-    constructor(viewport, uiDisplay, codeDisplay) {
+    constructor(viewport, uiDisplay, codeDisplay, tutorial) {
         this.viewport = viewport;
         this.uiDisplay = uiDisplay;
         this.codeDisplay = codeDisplay;
+        this.tutorial = tutorial;
 
         this.modifyMode = modifyMode.QueryOnly;
         this.tabWidth = 0;
+        this.wordWrap = false;
 
         this.activeExpression = null;
         this.activeTask = null;
@@ -74,6 +76,7 @@ export class GameState{
 export class TaskState {
     constructor(title, taskDesc, queryDescription, codeDescription, codeString, expressions) {
         this.title = title;
+        this.codeChangeCount = 0;
         this.codeString = codeString;
         this.expressions = expressions;
         this.taskDesc = taskDesc;

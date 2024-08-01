@@ -5,12 +5,14 @@ import { UIDisplay } from "./UI/uiDisplay.js";
 import { updateAll } from "./stateManager.js";
 import { CodeDisplay } from "./UI/codeDisplay.js";
 import { initializeTasks } from "./UI/menuTab.js";
+import { Tutorial } from "./UI/tutorial.js";
 
 
 const viewport = new Viewport();
 const uiDisplay = new UIDisplay();
 const codeDisplay = new CodeDisplay();
-const state = new GameState(viewport, uiDisplay, codeDisplay);
+const tutorial = new Tutorial();
+const state = new GameState(viewport, uiDisplay, codeDisplay, tutorial);
 
 const input = new InputHandler(state);
 
