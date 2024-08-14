@@ -3,13 +3,11 @@ import { transformPoint } from "./viewport/viewport.js";
 
 export function drawFragment(ctx, view, frag) {
     const points = frag.points;
-    if (points.length < 3) return; // A polygon needs at least 3 points
+    if (points.length < 3) return; 
 
-    // Set the fill color
     const col = rgbToString(frag.color);
     ctx.fillStyle = frag.isInverted ? createInvertedPattern(ctx, frag.color) : col;
     
-    // Calculate and set the border color
     let borderColor = frag.isHovered ? getInteractionColor(interactionType.Highlighted) :
         frag.isInverted ? col : darkColor(frag.color);
     

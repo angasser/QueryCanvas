@@ -80,6 +80,7 @@ export function updateViewport(canvas, state, viewportRecalculate=true) {
                 const prevFrag = activeView.fragments.get(prevI);
                 const newFrag = activeView.fragments.get(toInt([fragShapes[fragShapes.length - 1]]));
                 points = intersect(prevFrag.points, newFrag.points);
+
                 color = colorLerp(prevFrag.color, newFrag.color, 1 / fragShapes.length);
             }
 

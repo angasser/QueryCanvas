@@ -336,12 +336,11 @@ export function createTask(state, title, taskDesc, queryDesc, codeDesc, codeStri
         expressions.set(id, exp);
     }
 
-    if (title === "Tutorial") {
-        console.log(state);
-        state.tutorial.currentPage = 0;
-        state.tutorial.unlockedPages = 0;
-        updateTutorialPage(state.tutorial);
-    }
+    // if (title === "Tutorial") {
+    //     state.tutorial.currentPage = 0;
+    //     state.tutorial.unlockedPages = 0;
+    //     updateTutorialPage(state.tutorial);
+    // }
 
     const task = new TaskState(title, taskDesc, queryDesc, codeDesc, codeString, expressions);
     return task;

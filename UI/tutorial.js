@@ -1,4 +1,5 @@
 import { toolType } from "../structs.js";
+import { VARIABLES_VISIBLE } from "./uiDisplay.js";
 
 export class Tutorial {
     constructor() {
@@ -16,7 +17,7 @@ export class Tutorial {
         this.nextButton.addEventListener('click', () => nextTutorialPage(this));
         this.previousButton.addEventListener('click', () => previousTutorialPage(this));
 
-        this.pages = [
+        const startPages = [
             {
                 title: "Introduction",
                 content: "Hello! I'll be your guide through the system.",
@@ -30,7 +31,11 @@ export class Tutorial {
             },
             {
                 title: "Introduction",
-                content: `The system uses Venn diagrams to visualize boolean expressions, allowing you to simulate query interactions by overlapping them.`,
+                content: `
+                    <div>
+                        The system uses Venn diagrams to visualize boolean expressions, allowing you to simulate query interactions by overlapping them.
+                    </div>
+                    <img class="tutorialImage" src="./imgs/tutVenn.png">`,
                 isFinished: null,
             },
             {
@@ -80,7 +85,13 @@ export class Tutorial {
             },
             {
                 title: "Viewport",
-                content: `Since all regions of the diagram are enabled, the results is "mozzarella *or* pineapple".`,
+                content: `A Venn diagram has different regions. Each regions represents a single conjunction. <br> 
+                For instance, the intersection of the two circles is "mozzarella *and* pineapple".`,
+                isFinished: null,
+            },
+            {
+                title: "Viewport",
+                content: `But since all regions of the diagram are enabled, the results is "mozzarella *or* pineapple".`,
                 isFinished: null,
             },
             {
@@ -104,7 +115,7 @@ export class Tutorial {
             },
             {
                 title: "Viewport",
-                content: `Left-click on the different regions of the diagram to adjust it to "mozzarella but not pineapple".`,
+                content: `In the Venn diagram there are three different regions: Each query alone and their intersection. Left-click on the different regions of the diagram to adjust it to "mozzarella but not pineapple".`,
                 isFinished: (state) => {
                     if (!state.hasExp())
                         return false;
@@ -183,22 +194,8 @@ export class Tutorial {
                 isFinished: null,
             },
             {
-                title: "Code Editor",
-                content: `If you check the code editor, you'll see that all your changes have been updated automatically.`,
-                isFinished: null,
-            },
-            {
-                title: "Second Exercise",
-                content: `
-                    <div>
-                        We're already halfway there! Quite easy, right?<br> Let's move to the second example in the editor.
-                    </div>
-                    <img class="tutorialImage" src="./imgs/tut_exp2.png">`,
-                isFinished: (state) => state.hasExp() && state.activeExpression.queries.size === 7,
-            },
-            {
-                title: "Second Exercise",
-                content: `This example might seem a bit overwhelming and nonsensical.<br> First, right-click and drag to move the camera.<br> Use the mouse wheel to zoom in and out for a better view.`,
+                title: "Movement",
+                content: `If your expression becomes more complex, you may need more space to work with.<br> Right-click and drag to move the camera.<br> Use the mouse wheel to zoom in and out for a better view.`,
                 isFinished: (state) => {
                     if (!state.hasExp())
                         return false;
@@ -210,7 +207,8 @@ export class Tutorial {
                 title: "Shapes",
                 content: `
                     <div>
-                        Great! In the Query tab, you'll find an overview of all the queries.<br> First, display all shapes related to "mozzarella" by clicking on the arrow.
+                        Great! In the Query tab, you'll find an overview of all the queries.<br>
+                        First, display all shapes related to "mozzarella" by clicking on the arrow.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_togShape.png">`,
                 isFinished: (state) => {
@@ -222,7 +220,7 @@ export class Tutorial {
             {
                 title: "Shapes",
                 content: `Now you can see all shapes associated with the query "mozzarella".<br> 
-                Keep in mind that a query can have multiple shapes.<br>
+                Keep in mind that you can use a query multiple times as different shapes if you have a more difficult expression.<br>
                 You could also add new shapes by clicking the '+' icon next to each query.`,
                 isFinished: null
             },
@@ -230,7 +228,7 @@ export class Tutorial {
                 title: "Shapes",
                 content: `
                     <div>
-                        For each shape, you can adjust its appearance, size, or delete it.<br> Now, click on the magnifying glass of the first "mozzarella" shape to find the shape in the viewport.
+                        For each shape, you can adjust its appearance, size, or delete it.<br> If you lose sight of your shape, click on the magnifying glass of the first "mozzarella" shape to find the shape in the viewport.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_mag.png">`,
                 isFinished: (state) => {
@@ -243,7 +241,6 @@ export class Tutorial {
                     return Math.abs(x) < 50 && Math.abs(y) < 50;
                 },
             },
-
             {
                 title: "Selection",
                 content: `Great! Now, try selecting the entire group of shapes by left-clicking and dragging from an empty space to box-select them.`,
@@ -255,6 +252,17 @@ export class Tutorial {
                 },
             },
 
+        ];
+
+        const nonVariablePages = [
+            {
+                title: "Selection",
+                content: `With box selection, you can move multiple items at once.`,
+                isFinished: null,
+            },
+        ];
+
+        const variablePages = [
             {
                 title: "Selection",
                 content: `With box selection, you can move multiple items at once.<br> 
@@ -303,6 +311,14 @@ export class Tutorial {
                 content: `Click on the back arrow to return to the main view.`,
                 isFinished: state => state.hasExp() && state.activeExpression.activeView.id === 0,
             },
+        ];
+    
+        const endPages = [
+            {
+                title: "Code Editor",
+                content: `If you check the code editor, you'll see that all your changes have been updated automatically.`,
+                isFinished: null,
+            },
             {
                 title: "General",
                 content: `These are already the most important features the system has to offer.`,
@@ -334,6 +350,7 @@ export class Tutorial {
 
 
         ];
+        this.pages = [...startPages, ...(VARIABLES_VISIBLE ? variablePages : nonVariablePages), ...endPages];
 
         updateTutorialPage(this);
     }

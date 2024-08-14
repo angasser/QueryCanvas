@@ -148,10 +148,9 @@ function removeEditorListeners(codeDisplay){
 export function updateCodeTab(state, codeDisplay) {
     if (state.selectedToolTab !== toolType.code) {
         toggleTabList(codeDisplay.codeTab, false);
-        return;
     }
-
-    toggleTabList(codeDisplay.codeTab, true);
+    else
+        toggleTabList(codeDisplay.codeTab, true);
 
     if (!codeDisplay.editor) {
         return;

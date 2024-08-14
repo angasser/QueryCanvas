@@ -8,6 +8,8 @@ import { updateHelpTab } from './helpTab.js';
 import { updateMenuTab } from './menuTab.js';
 import { setTabWidth } from '../stateManager.js';
 
+export const VARIABLES_VISIBLE = true;
+
 export class UIDisplay {
     constructor() {
         this.queryList = document.querySelector('#queryList');
@@ -15,6 +17,8 @@ export class UIDisplay {
         this.helpTab = document.querySelector('#helpTab');
         this.menuTab = document.querySelector('#menuTab');
         this.titleList = document.querySelector('#titleList');
+
+
 
         this.tabResizer = document.querySelector('#tabResizer');
         this.menuButton = document.querySelector('#menuButton');
@@ -94,6 +98,11 @@ export function initializeUiInput(uiDisplay, state) {
     });
 
     // title bar
+    if (!VARIABLES_VISIBLE) {
+        const wrap = document.querySelector('#titleTab');
+        wrap.style.display = 'none';
+    }
+
     uiDisplay.titleInput.addEventListener('blur', function (event) {
         const val = event.target.value;
 

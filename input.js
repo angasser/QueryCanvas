@@ -31,6 +31,10 @@ export class InputHandler {
 function initializeInput(handler, canvas) {
     const state = handler.state;
 
+    window.addEventListener('resize', () => {
+        updateAll(state, true, true);
+    });
+
     canvas.addEventListener('mousedown', (e) => {
         if (!state.hasExp())
             return;

@@ -1,3 +1,4 @@
+import { shapeType } from "../structs.js";
 import { drawCanvasQueryCircle } from "../UI/uiDisplay.js";
 import { transformPoint } from "./viewport.js";
 
@@ -31,8 +32,8 @@ export function updateBoxHover(state) {
 }
 
 function addQueryTag(state, shape) {
-    // if (shape.shapeType === shapeType.Rectangle)
-    //     return;
+    if (shape.shapeType === shapeType.Rectangle)
+        return;
 
     const c = state.viewport.mainContext;
     const center = transformPoint(state.activeExpression.activeView, shape.center);
@@ -42,9 +43,11 @@ function addQueryTag(state, shape) {
         c.font = '20px Arial';
         c.textAlign = 'center';
         c.fillStyle = 'black';
-        c.fillText(query.content, center.x, center.y + 20);
+
+        const yPos = center.y;
+        c.fillText(query.content, center.x, yPos + 20);
         
-        drawCanvasQueryCircle(c, query, { x: center.x, y: center.y - 30 }, 1);
+        drawCanvasQueryCircle(c, query, { x: center.x, y: yPos - 30 }, 1);
     }
     else {
         drawCanvasQueryCircle(c, query, { x: center.x, y: center.y }, 1);
