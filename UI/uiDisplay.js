@@ -7,8 +7,8 @@ import { updateCodeTab } from './codeDisplay.js';
 import { updateHelpTab } from './helpTab.js';
 import { updateMenuTab } from './menuTab.js';
 import { setTabWidth } from '../stateManager.js';
+import { VARIABLES_VISIBLE } from '../sceneManager.js';
 
-export const VARIABLES_VISIBLE = true;
 
 export class UIDisplay {
     constructor() {
@@ -17,6 +17,7 @@ export class UIDisplay {
         this.helpTab = document.querySelector('#helpTab');
         this.menuTab = document.querySelector('#menuTab');
         this.titleList = document.querySelector('#titleList');
+        this.devTab = document.querySelector('#devTab');
 
 
 
@@ -73,6 +74,7 @@ export function initializeUiInput(uiDisplay, state) {
 
 
     // Dev tab
+    uiDisplay.devTab.style.display = state.testGroup === -1 ? 'block' : 'none';
     const checkbox = document.getElementById('toggleCheckbox');
     checkbox.checked = true;
     checkbox.addEventListener('change', function () {

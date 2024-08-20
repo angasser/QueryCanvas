@@ -1,3 +1,4 @@
+import { addMetadataToUrl, getMetadataFromUrl } from "./util.js";
 
 export const modifyMode = Object.freeze({
     All: 0,
@@ -43,6 +44,15 @@ export const interactionType = Object.freeze({
 
 export class GameState{
     constructor(viewport, uiDisplay, codeDisplay, tutorial) {
+        const m = getMetadataFromUrl("testGroup");
+        if (m !== null) {
+            this.testGroup = parseInt(m);
+        }
+        else {
+            addMetadataToUrl("testGroup", -1);
+            this.testGroup = -1;
+        }
+            
         this.viewport = viewport;
         this.uiDisplay = uiDisplay;
         this.codeDisplay = codeDisplay;

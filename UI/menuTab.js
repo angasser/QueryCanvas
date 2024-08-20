@@ -2,19 +2,36 @@ import { defaultExpressionState, switchExpression, switchTask } from "../stateMa
 import { TaskState, toolType } from "../structs.js";
 import { taskSandbox } from "../tasks/SandboxTask.js";
 import { task1 } from "../tasks/task1.js";
+import { task10 } from "../tasks/task10.js";
 import { task2 } from "../tasks/task2.js";
 import { task3 } from "../tasks/task3.js";
 import { task4 } from "../tasks/task4.js";
 import { task5 } from "../tasks/task5.js";
 import { task6 } from "../tasks/task6.js";
+import { task7 } from "../tasks/task7.js";
+import { task8 } from "../tasks/task8.js";
+import { task9 } from "../tasks/task9.js";
 import { taskTutorial } from "../tasks/TutorialTask.js";
+import { addMetadataToUrl, getMetadataFromUrl } from "../util.js";
 import { toggleTabList } from "./uiDisplay.js";
 
-const tasks = [taskSandbox, taskTutorial, task1, task2, task3, task4, task5, task6];
+const tasks = [taskSandbox, taskTutorial, task8, task9, task10, task4, task7, task1, task2];
 export function initializeTasks(state) {
+    state.taskGroup0 = new Set();
+    state.taskGroup1 = new Set();
+
+    let parity = 0;
     for (const task of tasks) {
         const t = task(state);
         state.tasks.set(t.title, t);
+
+        parity = (parity + 1) % 2;
+        if (parity === 0) {
+            state.taskGroup0.add(t.title);
+        }
+        else {
+            state.taskGroup1.add(t.title);
+        }
     }
 
     switchTask(state, "Tutorial");

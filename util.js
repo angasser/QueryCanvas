@@ -1,6 +1,18 @@
 import { interactionType, shapeType, toolType } from "./structs.js";
 import { transformPoint } from "./viewport/viewport.js";
 
+export function addMetadataToUrl(key, value) {
+    const url = new URL(window.location.href);
+    url.searchParams.set(key, value);
+    window.history.pushState({}, '', url);
+}
+
+export function getMetadataFromUrl(key) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(key);
+}
+
+
 export function drawFragment(ctx, view, frag) {
     const points = frag.points;
     if (points.length < 3) return; 

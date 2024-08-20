@@ -22,7 +22,7 @@ const codeDescription =
 
 export function task2(state) {
     
-    const task = createTask(state, "Task 2", description, queryDescription, codeDescription, code, new Map([
+    const task = createTask(state, "Task 6: Raincoat", description, queryDescription, codeDescription, code, new Map([
         ["Q1", {
             varString: "",
             expressionString: "True",

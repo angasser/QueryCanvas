@@ -21,6 +21,7 @@ export class InputHandler {
         this.mousePos = { x: 0, y: 0 };
         this.mouseViewPos = { x: 0, y: 0 };
 
+
         initializeInput(this, state.viewport.mainCanvas, state);
         initializeUiInput(state.uiDisplay, state);
         initialzeCodeInput(state, state.codeDisplay);
@@ -33,6 +34,12 @@ function initializeInput(handler, canvas) {
 
     window.addEventListener('resize', () => {
         updateAll(state, true, true);
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+        }
     });
 
     canvas.addEventListener('mousedown', (e) => {

@@ -1,5 +1,5 @@
+import { VARIABLES_VISIBLE } from "../sceneManager.js";
 import { toolType } from "../structs.js";
-import { VARIABLES_VISIBLE } from "./uiDisplay.js";
 
 export class Tutorial {
     constructor() {

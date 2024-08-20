@@ -1,8 +1,9 @@
+import { DISPLAY_TEXT } from "../sceneManager.js";
 import { shapeType } from "../structs.js";
 import { drawCanvasQueryCircle } from "../UI/uiDisplay.js";
 import { transformPoint } from "./viewport.js";
 
-const DISPLAY_TEXT = true;
+
 
 export function updateQueryTags(state) {
     state.uiDisplay.queryTagRef.innerHTML = '';

@@ -7,6 +7,9 @@ import { CodeDisplay } from "./UI/codeDisplay.js";
 import { initializeTasks } from "./UI/menuTab.js";
 import { Tutorial } from "./UI/tutorial.js";
 
+export const VARIABLES_VISIBLE = false;
+export const SHOW_BACKGROUND = true;
+export const DISPLAY_TEXT = true;
 
 const viewport = new Viewport();
 const uiDisplay = new UIDisplay();
@@ -19,4 +22,3 @@ const input = new InputHandler(state);
 initializeTasks(state);
 
 updateAll(state);
-

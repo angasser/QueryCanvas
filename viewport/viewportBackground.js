@@ -1,4 +1,4 @@
-const SHOW_BACKGROUND = true;
+import { SHOW_BACKGROUND } from "../sceneManager.js";
 
 
 export function initBackgroundPattern(canvas, gridSize) {

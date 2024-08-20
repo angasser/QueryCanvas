@@ -1,4 +1,4 @@
-import { ExpressionLocation, TaskExpressionState, TaskState, ViewportState, hoverType, interactionType, shapeType, toolType } from './structs.js';
+import { ExpressionLocation, TaskExpressionState, TaskState, ViewportState, hoverType, interactionType, modifyMode, shapeType, toolType } from './structs.js';
 import { deserializeTaskExpression, getColor, getFragmentsFromShapes, getQueriesFromShapes, getRandomId, getShapesFromFragments, getShapesFromQuery, isSubset, numberToLetter, serializeTaskExpression, setElementInteraction, toInt, toShapes } from './util.js';
 import { updateUi } from './UI/uiDisplay.js';
 import { updateViewport, findEmpySpace } from './viewport/viewport.js';
@@ -346,6 +346,43 @@ export function createTask(state, title, taskDesc, queryDesc, codeDesc, codeStri
     return task;
 }
 
+function applyModifyMode(state) {
+    if (state.testGroup === -1)
+        return;
+
+    if (state.activeTask.title === "Tutorial" ||
+        state.activeTask.title === "Sandbox" ||
+        state.activeTask.title === "Test task: Plants"
+    ) {
+        state.modifyMode = modifyMode.QueryOnly;
+        return;
+    }
+
+    if (state.testGroup === -2) {
+        state.modifyMode = modifyMode.CodeOnly;
+        return;
+    }
+    else if (state.testGroup === -3) {
+        state.modifyMode = modifyMode.QueryOnly;
+        return;
+    }
+    
+    const parity = state.testGroup % 2;
+    if (parity === 0) {
+        console.log(state.taskGroup0, state.taskGroup0.has(state.activeTask.title));
+        if(state.taskGroup0.has(state.activeTask.title))
+            state.modifyMode = modifyMode.QueryOnly;
+        else
+            state.modifyMode = modifyMode.CodeOnly;
+    }
+    else {
+        if(state.taskGroup1.has(state.activeTask.title))
+            state.modifyMode = modifyMode.QueryOnly;
+        else
+            state.modifyMode = modifyMode.CodeOnly;
+    }
+}
+
 export function switchTask(state, taskTitle) {
     if(state.activeTask !== null)
         state.activeTask.hasBeenViewed = true;
@@ -359,7 +396,12 @@ export function switchTask(state, taskTitle) {
     state.selectedToolTab = taskTitle === "Tutorial" ? toolType.none :
         state.activeTask.codeString !== "" ? toolType.code : toolType.result;
 
+    applyModifyMode(state);
 
+    if (state.modifyMode === modifyMode.CodeOnly) {
+        state.activeExpression = null;
+    }
+    
     saveState(state, "Switched to task " + taskTitle);
     if(state.activeExpression === null && taskTitle !== "Tutorial"){
         switchExpression(state, state.activeTask.expressions.values().next().value);
@@ -369,12 +411,19 @@ export function switchTask(state, taskTitle) {
 }
 
 export function switchExpression(state, expression) {
+    applyModifyMode(state);
     state.activeExpression = expression;
 
     state.activeTask.activeExpression = expression;
     if(expression !== null)
         state.activeExpression.activeView = state.activeExpression.viewportStates.get(0);
+    
+    if (state.modifyMode === modifyMode.CodeOnly) {
+        state.activeExpression = null;
+    }
+
     updateAll(state);
+    
 }
 
 export function saveState(state, tooltip) {

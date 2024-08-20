@@ -748,9 +748,9 @@ function quer2String(state, view, c1, c2, expStrs)
         str += s2;
         hasParen = false;
     } else if (c1Active && c2Active && !bothActive) {
-        str += s1;
+        str += "(" + s1 + ")";
         str += " != ";
-        str += s2;
+        str += "(" + s2 + ")";
         hasParen = false;
     } else if (c1Active && !c2Active && bothActive) {
         str += s1;
