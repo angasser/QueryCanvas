@@ -358,22 +358,19 @@ function applyModifyMode(state) {
         return;
     }
 
-    if (state.testGroup === -2) {
-        state.modifyMode = modifyMode.CodeOnly;
-        return;
-    }
-    else if (state.testGroup === -3) {
+    const parity = state.testGroup % 2;
+    
+    if (parity === 0 || state.testGroup === -2) {
         state.modifyMode = modifyMode.QueryOnly;
         return;
     }
+    else if (parity === 1 || state.testGroup === -3) {
+        state.modifyMode = modifyMode.CodeOnly;
+        return;
+    }
     
-    const parity = state.testGroup % 2;
     if (parity === 0) {
-        console.log(state.taskGroup0, state.taskGroup0.has(state.activeTask.title));
-        if(state.taskGroup0.has(state.activeTask.title))
-            state.modifyMode = modifyMode.QueryOnly;
-        else
-            state.modifyMode = modifyMode.CodeOnly;
+        state.modifyMode = modifyMode.QueryOnly;
     }
     else {
         if(state.taskGroup1.has(state.activeTask.title))
@@ -462,6 +459,10 @@ export function undoState(state) {
     state.tasks.set(newState.title, newState);
     state.activeTask = newState;
     state.activeExpression = newState.activeExpression;
+
+    if(state.modifyMode === modifyMode.CodeOnly)
+        state.activeExpression = null;
+
     updateAll(state);
 }
 
@@ -476,6 +477,10 @@ export function redoState(state) {
     state.tasks.set(newState.title, newState);
     state.activeTask = newState;
     state.activeExpression = newState.activeExpression;
+
+    if(state.modifyMode === modifyMode.CodeOnly)
+        state.activeExpression = null;
+
     updateAll(state);
 }
 
