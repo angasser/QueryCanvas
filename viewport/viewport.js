@@ -135,7 +135,7 @@ export function findEmpySpace(state, radius) {
     for (let i = 0; i < 100; i++) {
         for (let x = -i; x <= i; x ++) {
             for (let y = -i; y <= i; y++) {
-                const p = { x: xc + x * radius, y: yc + y * radius };
+                const p = { x: xc + x * radius + Math.random(), y: yc + y * radius + Math.random() };
                 if (getShapesUnderPoint(p, state).size === 0) {
 
                     return p;
