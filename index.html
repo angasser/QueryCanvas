@@ -184,6 +184,7 @@
             padding-top: 64px;
             padding-bottom: 28px;
             z-index: -1;
+            font-family: 'Arial', sans-serif;
 
             background-color: #ffffff; 
             border: 2px solid rgb(100, 100, 100);
@@ -308,6 +309,26 @@
             max-height: 160px;
         }
 
+        #frontUIBox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgb(255, 255, 255);
+            
+            font-size: 24px;
+            font-family: 'Arial', sans-serif;
+            color: rgb(0, 0, 0);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; 
+            align-items: flex-start; 
+            padding: 10% 25%; 
+            box-sizing: border-box; 
+            z-index: 1000000;
+        }
+
         .custom-break {
             height: 128px;
         }
@@ -315,7 +336,13 @@
     </style> 
 </head>
 <body>
-<div class="myGlyphMarginClass">    </div>
+    <div id="frontUIBox">
+        <h1 id="frontUITitle">Title</h1>
+        <p id="frontUIText">Some text goes here.</p>
+        <br>
+        <button id="frontUIButton" class="topButton" style="width: 25%; justify-content: center;">Show Content</button>
+    </div>
+
     <canvas id="backgroundCanvas"></canvas>
     <canvas id="mainCanvas"></canvas>
 

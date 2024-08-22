@@ -18,7 +18,7 @@ const tutorial = new Tutorial();
 const state = new GameState(viewport, uiDisplay, codeDisplay, tutorial);
 
 const input = new InputHandler(state);
-
 initializeTasks(state);
+
 
 updateAll(state);

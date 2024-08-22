@@ -33,8 +33,8 @@ export function updateBoxHover(state) {
 }
 
 function addQueryTag(state, shape) {
-    if (shape.shapeType === shapeType.Rectangle)
-        return;
+    // if (shape.shapeType === shapeType.Rectangle)
+    //     return;
 
     const c = state.viewport.mainContext;
     const center = transformPoint(state.activeExpression.activeView, shape.center);

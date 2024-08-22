@@ -37,9 +37,32 @@ function initializeInput(handler, canvas) {
     });
 
     window.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-            e.preventDefault();
-        }
+        const keysToDisable = [
+            { ctrlKey: true, key: 'r' }, // Reload
+            { ctrlKey: true, key: 'w' }, // Close tab
+            { ctrlKey: true, key: 't' }, // New tab
+            { ctrlKey: true, key: 'n' }, // New window
+            { ctrlKey: true, shiftKey: true, key: 'n' }, // New incognito window
+            { ctrlKey: true, key: 'h' }, // History
+            { ctrlKey: true, key: 'j' }, // Downloads
+            { ctrlKey: true, key: 'p' }, // Print
+            { ctrlKey: true, key: 's' }, // Save
+            { ctrlKey: true, shiftKey: true, key: 't' }, // Reopen closed tab
+            { ctrlKey: true, shiftKey: true, key: 'w' }, // Close window
+            { altKey: true, key: 'F4' }, // Close window (Alt+F4)
+            { ctrlKey: true, key: 'd' }, // Bookmark
+        ];
+
+        keysToDisable.forEach((combo) => {
+            if (
+                (combo.ctrlKey === undefined || combo.ctrlKey === e.ctrlKey) &&
+                (combo.shiftKey === undefined || combo.shiftKey === e.shiftKey) &&
+                (combo.altKey === undefined || combo.altKey === e.altKey) &&
+                combo.key === e.key
+            ) {
+                e.preventDefault();
+            }
+        });
     });
 
     canvas.addEventListener('mousedown', (e) => {

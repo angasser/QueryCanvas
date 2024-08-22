@@ -52,6 +52,7 @@ export class GameState{
             addMetadataToUrl("testGroup", -1);
             this.testGroup = -1;
         }
+        this.testIteration = -1;
             
         this.viewport = viewport;
         this.uiDisplay = uiDisplay;

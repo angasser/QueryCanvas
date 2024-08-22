@@ -346,37 +346,29 @@ export function createTask(state, title, taskDesc, queryDesc, codeDesc, codeStri
     return task;
 }
 
+export function areBaseTasks(title) {
+    return title === "Tutorial" || title === "Sandbox" || title === "Test task: Plants";
+}
+
 function applyModifyMode(state) {
     if (state.testGroup === -1)
         return;
 
-    if (state.activeTask.title === "Tutorial" ||
-        state.activeTask.title === "Sandbox" ||
-        state.activeTask.title === "Test task: Plants"
+    if (areBaseTasks(state.activeTask.title)
     ) {
         state.modifyMode = modifyMode.QueryOnly;
         return;
     }
 
-    const parity = state.testGroup % 2;
-    
-    if (parity === 0 || state.testGroup === -2) {
-        state.modifyMode = modifyMode.QueryOnly;
-        return;
-    }
-    else if (parity === 1 || state.testGroup === -3) {
-        state.modifyMode = modifyMode.CodeOnly;
-        return;
-    }
+    const parity = (state.testGroup + state.testIteration) % 2;
     
     if (parity === 0) {
         state.modifyMode = modifyMode.QueryOnly;
+        return;
     }
-    else {
-        if(state.taskGroup1.has(state.activeTask.title))
-            state.modifyMode = modifyMode.QueryOnly;
-        else
-            state.modifyMode = modifyMode.CodeOnly;
+    else if (parity === 1) {
+        state.modifyMode = modifyMode.CodeOnly;
+        return;
     }
 }
 

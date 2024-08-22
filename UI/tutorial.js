@@ -85,7 +85,7 @@ export class Tutorial {
             },
             {
                 title: "Viewport",
-                content: `A Venn diagram has different regions. Each regions represents a single conjunction. <br> 
+                content: `A Venn diagram has different regions. Each region represents a single conjunction. <br> 
                 For instance, the intersection of the two circles is "mozzarella *and* pineapple".`,
                 isFinished: null,
             },
@@ -207,7 +207,7 @@ export class Tutorial {
                 title: "Shapes",
                 content: `
                     <div>
-                        Great! In the Query tab, you'll find an overview of all the queries.<br>
+                        In the Query tab, you'll find an overview of all the queries.<br>
                         First, display all shapes related to "mozzarella" by clicking on the arrow.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_togShape.png">`,
@@ -344,13 +344,47 @@ export class Tutorial {
             },
             {
                 title: "General",
+                content: ``,
+                isFinished: null,
+            },
+        ];
+
+        const studyPages = [
+            {
+                title: "Study",
+                content: `There is also a sandbox where you can further try out the system.
+                <br>In the menu tab, you can now try out the test task.`,
+                    
+                isFinished: null,
+            },
+            {
+                title: "Study",
+                content: `Because many tasks could simply be brute-forced, you cannot test whether your solution is correct.
+                <br>Instead, just try to solve the task as best as you can.`,
+                isFinished: null,
+            },
+            {
+                title: "Study",
+                content: `After you feel comfortable with the system, you can start the study by clicking "End Tutorial" in the menu tab.`,
+                isFinished: null,
+            },
+        ];
+
+        const endEndPages = [
+            {
+                title: "General",
                 content: `Thank you for your patience! I hope you enjoy using the system.`,
                 isFinished: null,
             },
-
-
         ];
-        this.pages = [...startPages, ...(VARIABLES_VISIBLE ? variablePages : nonVariablePages), ...endPages];
+
+        this.pages = [
+            ...startPages,
+            ...(VARIABLES_VISIBLE ? variablePages : nonVariablePages),
+            ...endPages,
+            ...studyPages,
+            ...endEndPages,
+        ];
 
         updateTutorialPage(this);
     }
@@ -367,8 +401,8 @@ export function previousTutorialPage(tutorial) {
     updateTutorialPage(tutorial);
 }
 
-export function checkTutorialPageFinished(state, tutorial, first=true) {
-    if (state.activeTask.title !== "Tutorial") {
+export function checkTutorialPageFinished(state, tutorial, first = true) {
+    if (state.activeTask.title !== "Tutorial" && (state.testGroup < 0 || state.testIteration !== -1)) {
         tutorial.parent.style.display = 'none';
         return;
     }

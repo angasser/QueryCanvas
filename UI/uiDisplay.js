@@ -8,6 +8,7 @@ import { updateHelpTab } from './helpTab.js';
 import { updateMenuTab } from './menuTab.js';
 import { setTabWidth } from '../stateManager.js';
 import { VARIABLES_VISIBLE } from '../sceneManager.js';
+import { initializeFronuUI } from './frontUI.js';
 
 
 export class UIDisplay {
@@ -18,7 +19,11 @@ export class UIDisplay {
         this.menuTab = document.querySelector('#menuTab');
         this.titleList = document.querySelector('#titleList');
         this.devTab = document.querySelector('#devTab');
-
+        
+        this.frontUIBox = document.querySelector('#frontUIBox');
+        this.frontUIButton = document.querySelector('#frontUIButton');
+        this.frontUITitle = document.querySelector('#frontUITitle');
+        this.frontUIText = document.querySelector('#frontUIText');
 
 
         this.tabResizer = document.querySelector('#tabResizer');
@@ -71,6 +76,8 @@ export function initializeUiInput(uiDisplay, state) {
         if(uiDisplay.isDirty)
             updateUi(uiDisplay, state);
     }, 200);
+
+    initializeFronuUI(state, uiDisplay);
 
 
     // Dev tab
