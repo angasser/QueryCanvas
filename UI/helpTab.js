@@ -22,8 +22,7 @@ export function updateHelpTab(state, uiDisplay) {
         <h2>General</h2>
 
         <img class="helpImage" src="./imgs/general.png">
-        <div>This program tries to make boolean expressions more intuitive.</div>
-        <div>It is thought to be used parallel with a code editor, where any textual boolean query can be visualized.</div>
+        <div>This purpose of this program is to make boolean expressions easier to use and understand. The program will show you a code editor with embedded visualizations.</div>
         <div>The system is based on Venn Diagrams where you can simulate query interactions by overalpping them.</div>
         
         <div class="custom-break"></div>

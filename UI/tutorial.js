@@ -25,8 +25,7 @@ export class Tutorial {
             },
             {
                 title: "Introduction",
-                content: `This program aims to make boolean expressions more intuitive.<br>
-                It is designed to be used alongside a code editor, allowing any textual boolean query to be visualized.`,
+                content: `This purpose of this program is to make boolean expressions easier to use and understand. The program will show you a code editor with embedded visualizations.`,
                 isFinished: null,
             },
             {
@@ -42,7 +41,7 @@ export class Tutorial {
                 title: "Code Editor",
                 content: `
                     <div>
-                        First things first, let's navigate to the Code Editor.<br> It is the third button at the top left corner.
+                        First things first, let's navigate to the Code Editor.<br><br> It is the third button in the top left corner.
                     </div>
                     <img class="tutorialImage" src="./imgs/codeBarTab.png">`,
                 isFinished: (state) => state.selectedToolTab === toolType.code,
