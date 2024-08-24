@@ -41,31 +41,28 @@ export class Tutorial {
                 title: "Code Editor",
                 content: `
                     <div>
-                        First things first, let's navigate to the Code Editor.<br><br> It is the third button in the top left corner.
+                        First things first, let's navigate to the <i>Code Editor</i>.<br><br> It is the third button in the top left corner.
                     </div>
                     <img class="tutorialImage" src="./imgs/codeBarTab.png">`,
                 isFinished: (state) => state.selectedToolTab === toolType.code,
             },
             {
                 title: "Code Editor",
-                content: `Great! In this tab, you can see the task description of your current exercise.<br>
-                    Below, you can find the associated code you need to edit.`,
+                content: `Great! In this tab, you can see the task description of your current exercise. Below, you can find the associated code you need to edit.`,
                 isFinished: null,
             },
             {
                 title: "Code Editor",
                 content: `
                     <div>
-                        If you get stuck, you can always reset the code.<br>
-                        Drag the double arrows to change the size of the code editor.
+                        If you get stuck, you can always reset the code. Drag the double arrows to change the size of the code editor.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_reset.png">`,
                 isFinished: null,
             },
             {
                 title: "Code Editor",
-                content: `In the code, you'll notice a boolean expression named 'pizza_toppings'.<br> 
-                In this tutorial exercise, your task is to select the appropriate pizza topping.`,
+                content: `In the code, you'll notice a boolean expression named 'pizza_toppings'. In this tutorial exercise, your task is to select the appropriate pizza topping.`,
                 isFinished: null,
             },
             {
@@ -84,8 +81,7 @@ export class Tutorial {
             },
             {
                 title: "Viewport",
-                content: `A Venn diagram has different regions. Each region represents a single conjunction. <br> 
-                For instance, the intersection of the two circles is "mozzarella *and* pineapple".`,
+                content: `A Venn diagram has different regions. Each region represents a single conjunction. For instance, the intersection of the two circles is "mozzarella *and* pineapple".`,
                 isFinished: null,
             },
             {
@@ -97,19 +93,19 @@ export class Tutorial {
                 title: "Output tab",
                 content: `
                     <div>
-                        To better understand the output of this diagram, go to the Output tab located next to the Code Editor tab.
+                        To better understand the output of this diagram, go to the <i>Output</i> tab located next to the <i>Code Editor</i> tab.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_outTab.png">`,
                 isFinished: (state) => state.selectedToolTab === toolType.result,
             },
             {
                 title: "Output tab",
-                content: `In this tab, you can view the output of the current expression directly, without any of the syntactic sugar of Python code.`,
+                content: `In this tab, you can view the output of the current expression directly without the rest of the Python code.`,
                 isFinished: null,
             },
             {
                 title: "Viewport",
-                content: `Let's modify the expression a bit.<br> As everyone knows, pineapple on pizza is a crime.`,
+                content: `Let's modify the expression a bit.<br><br> As everyone knows, pineapple on pizza is a crime.`,
                 isFinished: null,
             },
             {
@@ -126,14 +122,14 @@ export class Tutorial {
             },
             {
                 title: "Viewport",
-                content: `Nice! Now, let's add another topping to the pizza. <br>First, though, let's create a bit of space to work with.`,
+                content: `Nice! Now, let's add another topping to the pizza. <br><br>First, though, let's create a bit of space to work with.`,
                 isFinished: null,
             },
             {
                 title: "Viewport",
                 content: `
                     <div>
-                        Hover over the intersection with your mouse. <br>Then, left-click and drag the cursor to move the diagram and create some space.
+                        Hover over the intersection with your mouse. Then, left-click and drag the cursor to move the diagram and create some space.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_move.png">`,
                 isFinished: (state) => {
@@ -165,7 +161,7 @@ export class Tutorial {
                 title: "Add query",
                 content: `
                     <div>
-                        A new query has appeared.<br> You can name your query according to the topping you want to add to your pizza.
+                        A new query has appeared.<br><br>Give your query the same name as a topping that you want to add to your pizza.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_addQuery.png">`,
                 isFinished: null,
@@ -175,8 +171,7 @@ export class Tutorial {
                 title: "Add query",
                 content: `
                     <div>
-                        A new shape has also appeared in the viewport.<br>
-                        You can drag it around and position it to interact with the other queries as needed.
+                        A new shape has also appeared in the viewport. You can drag it around and position it to interact with the other queries as needed.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_3q.png">`,
                 isFinished: null,
@@ -186,15 +181,15 @@ export class Tutorial {
                 title: "Add query",
                 content: `
                     <div>
-                        If the shapes don't overlap, it semantically represents an 'or' operation: <br>
-                        "(Mozzarella and not pineapple) or tomato."
+                        If the shapes don't overlap, it semantically represents an 'or' operation, for example<br><br>
+                        <i>(mozzarella and not pineapple) or tomato</i>.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_sepShapes.png">`,
                 isFinished: null,
             },
             {
                 title: "Movement",
-                content: `If your expression becomes more complex, you may need more space to work with.<br> Right-click and drag to move the camera.<br> Use the mouse wheel to zoom in and out for a better view.`,
+                content: `If your expression becomes more complex, you may need more space to work with. Test the following: <br><br>(1) Right-click and drag to move the camera.<br><br>(2) Use the mouse wheel to zoom in and out for a better view.`,
                 isFinished: (state) => {
                     if (!state.hasExp())
                         return false;
@@ -206,8 +201,7 @@ export class Tutorial {
                 title: "Shapes",
                 content: `
                     <div>
-                        In the Query tab, you'll find an overview of all the queries.<br>
-                        First, display all shapes related to "mozzarella" by clicking on the arrow.
+                        In the Query tab, you'll find an overview of all the queries. First, display all shapes related to "mozzarella" by clicking on the arrow.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_togShape.png">`,
                 isFinished: (state) => {
@@ -218,8 +212,7 @@ export class Tutorial {
             },
             {
                 title: "Shapes",
-                content: `Now you can see all shapes associated with the query "mozzarella".<br> 
-                Keep in mind that you can use a query multiple times as different shapes if you have a more difficult expression.<br>
+                content: `Now you can see all shapes associated with the query "mozzarella". Keep in mind that you can use a query multiple times as different shapes if you have a more difficult expression.<br><br>
                 You could also add new shapes by clicking the '+' icon next to each query.`,
                 isFinished: null
             },
@@ -327,7 +320,7 @@ export class Tutorial {
                 title: "General",
                 content: `
                     <div>
-                        In the 'help' tab you can find a summary of this tutorial.
+                        In the <i>Help</i> tab you can find a summary of this tutorial.
                      </div>
                     <img class="tutorialImage" src="./imgs/tut_help.png">`,
                 isFinished: null,
@@ -358,8 +351,7 @@ export class Tutorial {
             },
             {
                 title: "Study",
-                content: `Because many tasks could simply be brute-forced, you cannot test whether your solution is correct.
-                <br>Instead, just try to solve the task as best as you can.`,
+                content: `Because many tasks could simply be brute-forced, you cannot test whether your solution is correct. Instead, just try to solve the task as best as you can.`,
                 isFinished: null,
             },
             {
