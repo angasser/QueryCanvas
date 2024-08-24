@@ -3,6 +3,8 @@ import { TaskState, toolType } from "../structs.js";
 import { taskSandbox } from "../tasks/SandboxTask.js";
 import { task1 } from "../tasks/task1.js";
 import { task10 } from "../tasks/task10.js";
+import { task11 } from "../tasks/task11.js";
+import { task12 } from "../tasks/task12.js";
 import { task2 } from "../tasks/task2.js";
 import { task3 } from "../tasks/task3.js";
 import { task4 } from "../tasks/task4.js";
@@ -16,7 +18,7 @@ import { addMetadataToUrl, getMetadataFromUrl } from "../util.js";
 import { nextIteration } from "./frontUI.js";
 import { toggleTabList } from "./uiDisplay.js";
 
-const tasks = [taskSandbox, taskTutorial, task8, task9, task10, task4, task7, task1, task2];
+const tasks = [taskSandbox, taskTutorial, task8, task9, task10, task4, task7, task1, task2, task11, task12];
 export function initializeTasks(state) {
     state.tasks = new Map();
 

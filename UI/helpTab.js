@@ -1,3 +1,4 @@
+import { VARIABLES_VISIBLE } from "../sceneManager.js";
 import { toolType } from "../structs.js";
 import { toggleTabList } from "./uiDisplay.js";
 
@@ -18,7 +19,8 @@ export function updateHelpTab(state, uiDisplay) {
     helpContent.style.fontSize = '24px';
     helpContent.style.maxHeight = 'calc(100vh - 200px)';
     helpContent.style.overflowY = 'auto';
-    helpContent.innerHTML = `
+
+    const startContent = `
         <h2>General</h2>
 
         <img class="helpImage" src="./imgs/general.png">
@@ -56,11 +58,13 @@ export function updateHelpTab(state, uiDisplay) {
         <div>Right click and drag to move the camera.</div>
         <div>Use the scroll wheel to zoom.</div>
         <hr>
-
-
+        
         <img class="helpImage" src="./imgs/viewSelection.png" >
         <div>Left click and drag from an empty space to box select.</div>
         <div>With box selection you can move multiple items.</div>
+        `;
+    
+    const variableContent = `
         <div>You can also create a new variable from the current selection.</div>
         <hr>
 
@@ -80,6 +84,9 @@ export function updateHelpTab(state, uiDisplay) {
         <div>Variables can be used the same way as queries.</div>
         <div>Double click on a variable shape to switch to it.</div>
         <hr>
+        `;
+    
+    const endContent = `
 
         <div class="custom-break"></div>
         <h2>Tools</h2>
@@ -110,6 +117,8 @@ export function updateHelpTab(state, uiDisplay) {
         <div>This tab gives you textually the current state of the viewport.</div>
         <div>It is probably most helpful when learning the system.</div>
     `;
+
+    helpContent.innerHTML = startContent + (VARIABLES_VISIBLE ? variableContent : '') + endContent;
 
     uiDisplay.helpTab.appendChild(helpContent);
 }

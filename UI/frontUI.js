@@ -86,5 +86,5 @@ export function nextIteration(state, uiDisplay) {
         resetTask(state, task.title, false);
     }
 
-    switchTask(state, state.testIteration > 1 ? "Sandbox" : "Task 1: Alarm");
+    switchTask(state, state.testIteration > 1 ? "Sandbox" : "Task 1: Security system");
 }

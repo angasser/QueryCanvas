@@ -20,7 +20,7 @@ const codeDescription =
 
 export function task9(state) {
     
-    const task = createTask(state, "Task 1: Alarm", description, queryDescription, codeDescription, code, new Map([
+    const task = createTask(state, "Task 1: Security system", description, queryDescription, codeDescription, code, new Map([
         ["Q1", {
             varString: "",
             expressionString: "door_locked and not person_detected",
