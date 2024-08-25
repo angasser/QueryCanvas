@@ -8,11 +8,11 @@ def set_alarm(has_work, has_school, has_event, stay_up_late, is_weekend, is_unwe
 `;
 
 const description = 
-`You want to decide when to set your alarm clock with the following conditions:
+`You only want to set your alarm clock when any of the following conditions is true:
 
-If you have work or school the next day, unless it's a weekend and you didn't stay up late.
-Having an event the next day, regardless whether it's a weekend or you stayed up late.
-However, you won't attend the event if you are unwell.`;
+(1) If you have work or school the next day, unless it's a weekend and you didn't stay up late.
+(2) Having an event the next day, regardless whether it's a weekend or you stayed up late.
+(3) You are not feeling unwell.`;
 
 const queryDescription =
     `Only solve this task with the visual query system.`;

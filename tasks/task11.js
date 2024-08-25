@@ -8,11 +8,11 @@ def go_to_picnic(is_sunny, is_holiday, friends_available, transport_available, p
 `;
 
 const description = 
-`You want to go to a picnic under the following conditions:
+`You want to go to a picnic only if any of the following conditions is true:
 
-It is sunny and a holiday, and your friends are available.
-It is sunny, and the park is open, and you have transportation, even if it's not a holiday.
-It is a holiday, your friends are available, and you have transportation, even if it's not sunny.`;
+(1) It is sunny and a holiday, and your friends are available.
+(2) It is sunny, and the park is open, and you have transportation, even if it's not a holiday.
+(3) It is a holiday, your friends are available, and you have transportation, even if it's not sunny.`;
 
 const queryDescription =
     `Only solve this task with the visual query system.`;
@@ -22,7 +22,7 @@ const codeDescription =
 
 export function task11(state) {
     
-    const task = createTask(state, "Task 7: picnic", description, queryDescription, codeDescription, code, new Map([
+    const task = createTask(state, "Task 7: Picnic", description, queryDescription, codeDescription, code, new Map([
         ["Q1", {
             varString: "",
             expressionString: "True",
