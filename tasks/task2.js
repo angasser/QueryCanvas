@@ -8,10 +8,7 @@ def raincoat_required(is_raining, is_cold, has_umbrella, is_windy):
 `;
 
 const description = 
-`Write a query that describes when you should wear a raincoat:
-You only wear a raincoat if it is raining or it is cold.
-However, if it is raining, you don’t need one if you already have an umbrella.
-Similarly, if it is raining and you have an umbrella, you still need one if the wind is strong.
+`You want to find out if a raincoat is required for your walk. You you should wear a raincoat if it is cold, or if it is raining and either you don't have an umbrella or it is windy.
 `;
 
 const queryDescription =

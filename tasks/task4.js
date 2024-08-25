@@ -21,8 +21,7 @@ def get_dual_athletes(athletes):
 `;
 
 const description = 
-`In a sports event you have three different disciplines: Fencing, Tennis and Volleyball. 
-You want to get all athletes that play in exactly two of those sports. Only use boolean expressions in your solution.`;
+`In a sports event you have three different disciplines: fencing, tennis and volleyball. Build a list of all athletes that play in <b>exactly two</b> of those sports. Only use boolean expressions in your solution.`;
 
 const queryDescription =
     `Only solve this task with the visual query system.`;

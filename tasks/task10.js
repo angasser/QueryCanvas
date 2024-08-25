@@ -8,9 +8,7 @@ def energy_saving_mode(energy, plugged_in):
 `;
 
 const description = 
-`You want to control when your smart phone enters energy saving mode:
-
-Energy saving mode is only activated if the remaining energy is below 0.2 and it's not plugged in.`;
+`You want to control when your smart phone enters energy saving mode. The energy saving mode should only be activated if the remaining energy is below 0.2 and it's not plugged in.`;
 
 const queryDescription =
     `Only solve this task with the visual query system.`;

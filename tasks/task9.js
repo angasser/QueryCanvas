@@ -8,9 +8,7 @@ def alarm(person_detected, door_locked):
 `;
 
 const description = 
-`You have installed a new security system but it doesn't sound the alarm as intended:
-
-The alarm should sound if and only if a person is detected and the door is locked at the same time.`;
+`You have installed a new security system. The alarm should sound if and only if a person is detected and the door is locked at the same time.`;
 
 const queryDescription =
     `Only solve this task with the visual query system.`;

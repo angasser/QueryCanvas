@@ -2,16 +2,13 @@ import { createTask } from "../stateManager.js";
 
 const code =
 `
-def use_AC(temperature, at_home):
+def turn_on_AC(temperature, at_home):
     # Edit this function
     [Q1v]return [Q1]
 `;
 
 const description = 
-`Write a query that describes when the air conditioning (heating and cooling) should be turned on:
-
-The A/C should be turned on if the temperature is either below 17°C or if it's above 22°C.
-However, if you are not at home, the air conditioning should only keep the temperature above 17°C.`;
+`The air conditioning (AC) should be turned on if the temperature is either below 17°C or if it's above 23°C. However, if you are not at home, the air conditioning should only be turned on if the temperature is above 17°C.`;
 
 const queryDescription =
     `Only solve this task with the visual query system.`;

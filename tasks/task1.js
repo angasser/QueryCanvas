@@ -8,10 +8,7 @@ def correct_conclusion(player1_win, player2_win, timeout_occured, game_canceled)
 `;
 
 const description = 
-`Write a query that describes when a game has concluded correctly:
-If either player1 or player2 has won, but not both can win together.
-Independent of the above condition, the game also concludes correctly if there is a timeout.
-However, the game *never* concludes correctly if it is canceled.
+`A game has concluded correctly only when either Player 1 or Player 2 have won, but not both. Independently of the above condition, the game also concludes correctly if there is a timeout. However, the game *never* concludes correctly if it is canceled.
 `;
 
 const queryDescription =
