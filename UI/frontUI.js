@@ -8,11 +8,11 @@ export function initializeFronuUI(state, uiDisplay) {
     uiDisplay.frontUITitle.innerHTML = "Boolean Expression Study";
     uiDisplay.frontUIText.innerHTML =
         `You are about to participate in a study on boolean expressions.
-        <br>
+        <br><br>
         Please ensure that you have signed the consent form to participate.
         <br><br>
         Once you're ready, simply press the button below to begin the study.
-        <br>
+        <br><br>
         Be sure to follow the tutorial located at the bottom left of the screen.
         `;
     
@@ -32,13 +32,13 @@ export function nextIteration(state, uiDisplay) {
         uiDisplay.frontUIText.innerHTML =
             `Now, you'll be asked to complete a series of tasks involving writing Boolean expressions.
             <br><br>
-            You will perform these tasks twice: Once using the system, and once by writing code manually.
-            <br>
-            ${state.testGroup % 2 === 0 ? "You’ll start with the system version." : "You’ll start with the code version."}
+            You will be asked to perform these tasks twice: Once using the system, and once by writing code manually.
             <br><br>
-            Because many tasks could simply be brute-forced, you cannot test whether your solution is correct.
-            <br>
-            Once you're ready, simply press the button to get the first set of tasks.
+            ${state.testGroup % 2 === 0 ? "You’ll start with the system version." : "You’ll start with the code version."} The order was chosen at random.
+            <br><br>
+            Try to complete as many tasks as you can. When you think you are done with a task, you can move on to the next task. If you get stuck, you can also skip to the next task.
+            <br><br>
+            Once you're ready, simply press the button to view the first set of tasks.
             `;
         
         uiDisplay.frontUIButton.innerHTML = "Begin Tasks";
