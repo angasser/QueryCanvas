@@ -25,10 +25,10 @@ export function updateHelpTab(state, uiDisplay) {
 
         <img class="helpImage" src="./imgs/general.png">
         <div>This purpose of this program is to make boolean expressions easier to use and understand. The program will show you a code editor with embedded visualizations.</div>
-        <div>The system is based on Venn Diagrams where you can simulate query interactions by overalpping them.</div>
+        <div>The system is based on Venn Diagrams where you can simulate query interactions by overlapping them.</div>
         
         <div class="custom-break"></div>
-        <h2>Queries</h2>
+        <h2>Boolean variables</h2>
 
         <img class="helpImage" src="./imgs/queryBar.png">
         <div>Click on "+" to create a new query.</div>
@@ -110,7 +110,7 @@ export function updateHelpTab(state, uiDisplay) {
         <div>You can reset any task. Keep in mind that this will remove all your progress on this task.</div>
         <br>
         <div>Depending on the task you can always either only edit the code or use the query system.</div>
-        <div>You can open a boolean expression in the system clicking on the expression or the icon on the left side.</div>
+        <div>You can open a boolean variable in the system clicking on the variable or the icon on the left side.</div>
         <hr>
 
         <img class="helpImage" src="./imgs/result.png">

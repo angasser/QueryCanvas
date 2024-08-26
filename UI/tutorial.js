@@ -25,14 +25,14 @@ export class Tutorial {
             },
             {
                 title: "Introduction",
-                content: `This purpose of this program is to make boolean expressions easier to use and understand. The program will show you a code editor with embedded visualizations.`,
+                content: `This purpose of this program is to make boolean expressions easier to use and understand. The program will show you a code editor with embedded visualizations.<br><br>Remember that a boolean variable is a data type that's either <i>true</i> or <i>false</i>. A boolean expression is a combination of boolean variables and operators like <i>and</i>, <i>or</i> or <i>not</i>.`,
                 isFinished: null,
             },
             {
                 title: "Introduction",
                 content: `
                     <div>
-                        The system uses Venn diagrams to visualize boolean expressions, allowing you to simulate query interactions by overlapping them.
+                        The system allows you to build any boolean expressions by overlapping the shapes of Venn diagrams.
                     </div>
                     <img class="tutorialImage" src="./imgs/tutVenn.png">`,
                 isFinished: null,
@@ -62,7 +62,7 @@ export class Tutorial {
             },
             {
                 title: "Code Editor",
-                content: `In the code, you'll notice a boolean expression named 'pizza_toppings'. In this tutorial exercise, your task is to select the appropriate pizza topping.`,
+                content: `In the code, you'll notice a boolean variable named 'pizza_toppings'. In this tutorial exercise, your task is to select the appropriate pizza topping.`,
                 isFinished: null,
             },
             {
@@ -76,7 +76,7 @@ export class Tutorial {
             },
             {
                 title: "Viewport",
-                content: `Great job!<br> In the viewport, you can now view the Venn diagram that represents the boolean expression.`,
+                content: `Great job!<br><br>In the viewport, you can now view the Venn diagram that represents the boolean variable.`,
                 isFinished: null,
             },
             {
@@ -110,7 +110,7 @@ export class Tutorial {
             },
             {
                 title: "Viewport",
-                content: `In the Venn diagram there are three different regions: Each query alone and their intersection. Left-click on the different regions of the diagram to adjust it to "mozzarella but not pineapple".`,
+                content: `In the Venn diagram there are three different regions: Each variable alone and their intersection. Left-click on the different regions of the diagram to adjust it to "mozzarella but not pineapple".`,
                 isFinished: (state) => {
                     if (!state.hasExp())
                         return false;
@@ -143,10 +143,10 @@ export class Tutorial {
             },
 
             {
-                title: "Add query",
+                title: "Add variable",
                 content: `
                     <div>
-                        Now, click on the '+' icon at the top right of the screen to add a new query.
+                        Now, click on the '+' icon at the top right of the screen to add a new variable.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_addQ.png">`,
                 isFinished: (state) => {
@@ -158,31 +158,30 @@ export class Tutorial {
             },
 
             {
-                title: "Add query",
+                title: "Add variable",
                 content: `
                     <div>
-                        A new query has appeared.<br><br>Give your query the same name as a topping that you want to add to your pizza.
+                        A new variable has appeared.<br><br>Give your variable the same name as a topping that you want to add to your pizza.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_addQuery.png">`,
                 isFinished: null,
             },
 
             {
-                title: "Add query",
+                title: "Add variable",
                 content: `
                     <div>
-                        A new shape has also appeared in the viewport. You can drag it around and position it to interact with the other queries as needed.
+                        A new shape has also appeared in the viewport. You can drag it around and position it to interact with the other variables as needed.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_3q.png">`,
                 isFinished: null,
             },
 
             {
-                title: "Add query",
+                title: "Add variable",
                 content: `
                     <div>
-                        If the shapes don't overlap, it semantically represents an 'or' operation, for example<br><br>
-                        <i>(mozzarella and not pineapple) or tomato</i>.
+                        If the shapes don't overlap, it semantically represents an 'or' operation, for example <i>(mozzarella and not pineapple) or tomato</i>.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_sepShapes.png">`,
                 isFinished: null,
@@ -201,7 +200,7 @@ export class Tutorial {
                 title: "Shapes",
                 content: `
                     <div>
-                        In the Query tab, you'll find an overview of all the queries. First, display all shapes related to "mozzarella" by clicking on the arrow.
+                        In the <i>Boolean variable</i> tab, you'll find an overview of all the variables. First, display all shapes related to "mozzarella" by clicking on the arrow.
                     </div>
                     <img class="tutorialImage" src="./imgs/tut_togShape.png">`,
                 isFinished: (state) => {
@@ -212,8 +211,8 @@ export class Tutorial {
             },
             {
                 title: "Shapes",
-                content: `Now you can see all shapes associated with the query "mozzarella". Keep in mind that you can use a query multiple times as different shapes if you have a more difficult expression.<br><br>
-                You could also add new shapes by clicking the '+' icon next to each query.`,
+                content: `Now you can see all shapes associated with the variable "mozzarella". Keep in mind that you view the same variable as different shapes if you have a more difficult expression.<br><br>
+                You could also add new shapes by clicking the '+' icon next to each variable.`,
                 isFinished: null
             },
             {
@@ -258,7 +257,7 @@ export class Tutorial {
             {
                 title: "Selection",
                 content: `With box selection, you can move multiple items at once.<br> 
-                You can also collapse the queries and create a new variable.`,
+                You can also collapse the boolean variables and create a new variable.`,
                 isFinished: null,
             },
 
@@ -266,7 +265,7 @@ export class Tutorial {
                 title: "Variable",
                 content: `
                     <div>
-                        Click on the '+' icon at the center top of the screen to create a new variable.
+                        Click on the '+' icon at the center top of the screen to create a new boolean variable.
                      </div>
                     <img class="tutorialImage" src="./imgs/tut_vars.png">`,
                 isFinished: (state) => state.hasExp() && state.activeExpression.viewportStates.size > 1,
@@ -274,8 +273,7 @@ export class Tutorial {
 
             {
                 title: "Variable",
-                content: `Well done! You can name your variable as you wish.<br> 
-                A variable can be used just like any other query, helping to reduce redundancy and make the diagram more readable.`,
+                content: `Well done! You can name your variable as you wish.<br>`,
                 isFinished: null,
             },
             {

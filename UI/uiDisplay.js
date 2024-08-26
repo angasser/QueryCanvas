@@ -258,7 +258,7 @@ function hasQueries(state) {
 }
 
 function getQueryTabBaseTitle(state) {
-    return !hasQueries(state) ? "Create new Query" : state.activeExpression.areQueriesVisible ? "Queries" : "Show Queries";
+    return !hasQueries(state) ? "Create new variable" : state.activeExpression.areQueriesVisible ? "Boolean variables" : "Show boolean variables";
 }
 
 function getToolTabBaseTitle(state, tool = null) {
