@@ -48,8 +48,8 @@ export function nextIteration(state, uiDisplay) {
         uiDisplay.frontUIText.innerHTML =
             `
             You've completed the first set of tasks.
-            <br>
-            ${state.testGroup % 2 === 0 ? "Now, please fill out the questions about the system in the survey." : "Now, please fill out the questions about the coding tasks in the survey."}
+            <br><br>
+            Please fill out the remaining parts of the first survey.
             <br><br>
             After filling out the survey, you'll do the same tasks again, but in the other format.
             <br>
